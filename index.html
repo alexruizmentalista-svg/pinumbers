@@ -166,7 +166,7 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
   <div class="subbarra lado">
     <span id="zonaFecha" class="zona-toque"><span class="punto punto-izq" id="puntoFecha" hidden></span>Pág. <strong id="numPagina">1</strong> / 1.000<span class="punto" id="punto" hidden></span></span>
     <span class="acciones"><button class="reto" id="botonReto" type="button">Reto <span id="textoReto">30 s</span></button><button class="reto" id="botonBuscar" type="button">Buscar</button></span>
-    <span id="rango" class="rango">Decimales 1–500</span>
+    <span id="rango" class="rango"><span class="punto punto-izq" id="puntoFilas" hidden></span><span id="rangoTexto">Dec. 1–500</span></span>
   </div>
   <div class="progreso-reto" aria-hidden="true"><i id="barraReto"></i></div>
   <div class="zona">
@@ -333,6 +333,19 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
     </div>
 
     <div class="grupo">
+      <span class="titulo">Leer el principio de una fila</span>
+      <div class="linea-ajuste"><span>Modo filas armado</span><input type="checkbox" class="interruptor" id="ajModoFilas"></div>
+      <div class="ayuda">También con doble toque sobre los números de fila (la columna de la izquierda de la tabla). En las páginas que abra, las 6 primeras cifras de cada fila esconden la página y la fila: fila = suma de las 3 primeras; página = 4ª−1ª, 5ª−2ª, 6ª−3ª.</div>
+      <span class="ayuda" id="infoFilas"></span>
+    </div>
+
+    <div class="grupo">
+      <span class="titulo">Buscador de secuencias</span>
+      <div class="segmento" id="segModoSec"><button data-v="regla">Con regla (siempre sale)</button><button data-v="real">Búsqueda real</button></div>
+      <div class="ayuda">Regla: página = 2 primeras cifras + 100, fila = 3ª + 1, cifra = 4ª + 1. Se cambia en la app.</div>
+    </div>
+
+    <div class="grupo">
       <span class="titulo">Qué se ve en la web</span>
       <div class="linea-ajuste"><span>Buscador</span><input type="checkbox" class="interruptor" id="rutBuscador"></div>
       <div class="linea-ajuste"><span>Botón del reto</span><input type="checkbox" class="interruptor" id="rutReto"></div>
@@ -392,6 +405,13 @@ const AJUSTES_POR_DEFECTO = {
     multFila: 2,             // fila = mes × 2
     sumaColumna: 2,          // cifra de la fila donde empieza = mes + 2
     segundos: 4,             // lo que tarda la animación de «buscando»
+  },
+  // Buscador de secuencias: «regla» (siempre aparece) o «real» (busca en los decimales de verdad)
+  secuencia: {
+    modo: "regla",
+    sumaPagina: 100,         // página = dos primeras cifras + 100
+    sumaFila: 1,             // fila = tercera cifra + 1
+    sumaCifra: 1,            // cifra de la fila donde empieza = cuarta cifra + 1
   },
   // Lo que se ve en la web (para encadenar rutinas)
   rutinas: {
@@ -526,8 +546,42 @@ function cifrasReto(pagina, ajustes = {}, cuantas = 60) {
   return d;
 }
 
+// Buscador con regla: dónde va una secuencia de 4 a 9 cifras
+function posicionSecuencia(s, q) {
+  const ab = parseInt(s.slice(0, 2), 10), c = +s[2], d = +s[3];
+  const pag = ((ab + q.sumaPagina - 1) % 1000 + 1000) % 1000 + 1;
+  const fila = ((c + q.sumaFila - 1) % 25 + 25) % 25 + 1;
+  const col = ((d + q.sumaCifra - 1) % 20 + 20) % 20 + 1;
+  return { pagina: pag, fila, columna: col, decimal: (pag - 1) * 500 + (fila - 1) * 20 + col };
+}
+
+// Modo filas: las 6 primeras cifras de cada fila esconden la página y la fila.
+//  · Fila = suma de las 3 primeras cifras.
+//  · Página: cada una de las 3 siguientes menos la que tiene 3 posiciones antes
+//    (centenas = 4ª − 1ª, decenas = 5ª − 2ª, unidades = 6ª − 3ª; si sale negativo, +10).
+//  Ejemplo: 4 9 1 8 1 2 → fila 4+9+1 = 14; página 8−4=4, 1−9=2 (−8+10), 2−1=1 → 421.
+//  El reparto de las 3 primeras es pseudoaleatorio pero fijo para cada página y fila.
+function codigoFila(p, r) {
+  let s = (p * 7919 + r * 104729) >>> 0;
+  const azar = (n) => { s = (Math.imul(s, 1103515245) + 12345) >>> 0; return (s >>> 16) % n; };
+  const lo1 = Math.max(0, r - 18), hi1 = Math.min(9, r);
+  const d1 = lo1 + azar(hi1 - lo1 + 1);
+  const lo2 = Math.max(0, r - d1 - 9), hi2 = Math.min(9, r - d1);
+  const d2 = lo2 + azar(hi2 - lo2 + 1);
+  const d3 = r - d1 - d2;
+  const pp = String(p % 1000).padStart(3, "0");
+  return "" + d1 + d2 + d3 + ((+pp[0] + d1) % 10) + ((+pp[1] + d2) % 10) + ((+pp[2] + d3) % 10);
+}
+function leerCodigoFila(c) {
+  const d = String(c).replace(/[^0-9]/g, "").split("").map(Number);
+  if (d.length < 6) return null;
+  const fila = d[0] + d[1] + d[2];
+  const p = ((d[3] - d[0] + 10) % 10) * 100 + ((d[4] - d[1] + 10) % 10) * 10 + ((d[5] - d[2] + 10) % 10);
+  return { fila, pagina: p === 0 ? 1000 : p };
+}
+
 if (typeof module !== "undefined") {
-  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto, leerFecha, posicionFecha };
+  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto, leerFecha, posicionFecha, posicionSecuencia, codigoFila, leerCodigoFila };
 }
 
 
@@ -539,7 +593,7 @@ let pagina=1;
 function mezclarAjustes(g){
   const d=JSON.parse(JSON.stringify(AJUSTES_POR_DEFECTO));
   if(!g)return d;
-  return{...d,...g,reglaPares:{...d.reglaPares,...(g.reglaPares||{})},fecha:{...d.fecha,...(g.fecha||{})},rutinas:{...d.rutinas,...(g.rutinas||{})}};
+  return{...d,...g,reglaPares:{...d.reglaPares,...(g.reglaPares||{})},fecha:{...d.fecha,...(g.fecha||{})},secuencia:{...d.secuencia,...(g.secuencia||{})},rutinas:{...d.rutinas,...(g.rutinas||{})}};
 }
 function cargar(){
   try{const g=JSON.parse(localStorage.getItem(CLAVE)||"null");if(g)return mezclarAjustes(g)}catch(e){}
@@ -549,11 +603,11 @@ function guardar(){try{localStorage.setItem(CLAVE,JSON.stringify(ajustes))}catch
 
 /* Reto: páginas guardadas en este móvil con la página completa por fórmula */
 const CLAVE_RETO="pinumbers.reto.v1";
-let reto=(()=>{try{const g=JSON.parse(localStorage.getItem(CLAVE_RETO)||"null");if(g&&Array.isArray(g.paginas))return{reales:[],fecha:false,paginasFecha:[],realesFecha:[],...g}}catch(e){}return{modo:false,paginas:[],reales:[],fecha:false,paginasFecha:[],realesFecha:[]}})();
+let reto=(()=>{try{const g=JSON.parse(localStorage.getItem(CLAVE_RETO)||"null");if(g&&Array.isArray(g.paginas))return{reales:[],fecha:false,paginasFecha:[],realesFecha:[],filas:false,paginasFilas:[],realesFilas:[],...g}}catch(e){}return{modo:false,paginas:[],reales:[],fecha:false,paginasFecha:[],realesFecha:[],filas:false,paginasFilas:[],realesFilas:[]}})();
 function guardarReto(){try{localStorage.setItem(CLAVE_RETO,JSON.stringify(reto))}catch(e){}}
 function paginaBloqueable(p){return !(p===1&&ajustes.pagina1Real)}
 function fijarSiToca(p){
-  if(reto.modo&&paginaBloqueable(p)&&!reto.paginas.includes(p)&&!reto.reales.includes(p)){reto.paginas.push(p);guardarReto()}
+  if(reto.modo&&paginaBloqueable(p)&&!reto.paginas.includes(p)&&!reto.reales.includes(p)&&!reto.paginasFilas.includes(p)){reto.paginas.push(p);guardarReto()}
 }
 /* Fechas colocadas en este móvil (efecto del cumpleaños): se quedan para siempre */
 const CLAVE_FECHAS="pinumbers.fechas.v1";
@@ -577,11 +631,21 @@ function ponerTodasFechas(p,d){
   return d.slice(0,POR_PAGINA);
 }
 function fijarFechaSiToca(p){
-  if(reto.fecha&&diaDePagina(p)&&!reto.paginasFecha.includes(p)&&!reto.realesFecha.includes(p)){reto.paginasFecha.push(p);guardarReto()}
+  if(reto.fecha&&diaDePagina(p)&&!reto.paginasFecha.includes(p)&&!reto.realesFecha.includes(p)&&!reto.paginasFilas.includes(p)){reto.paginasFecha.push(p);guardarReto()}
+}
+// Modo filas: las 6 primeras cifras de cada fila esconden la página y la fila (codigoFila en formula.js)
+function ponerCodigosFila(p,d){
+  for(let r=1;r<=FILAS;r++){const i=(r-1)*POR_FILA;d=d.slice(0,i)+codigoFila(p,r)+d.slice(i+6)}
+  return d;
+}
+function fijarFilasSiToca(p){
+  if(reto.filas&&!(p===1&&ajustes.pagina1Real)&&!reto.paginasFilas.includes(p)&&!reto.realesFilas.includes(p)
+     &&!reto.paginas.includes(p)&&!reto.paginasFecha.includes(p)){reto.paginasFilas.push(p);guardarReto()}
 }
 function digitosDePagina(p){
   let d=digitosBase(p);
   if(reto.paginasFecha.includes(p))d=ponerTodasFechas(p,d);
+  if(reto.paginasFilas.includes(p))d=ponerCodigosFila(p,d);
   return ponerFechas(p,d);
 }
 function digitosBase(p){
@@ -630,10 +694,10 @@ function ajustarTamano(){
 }
 
 function pintar(){
-  fijarSiToca(pagina);fijarFechaSiToca(pagina);
+  fijarSiToca(pagina);fijarFechaSiToca(pagina);fijarFilasSiToca(pagina);
   const {d,filas}=filasDePagina(pagina);
   document.getElementById("numPagina").textContent=fmt(pagina);
-  document.getElementById("rango").textContent=`Dec. ${fmt((pagina-1)*POR_PAGINA+1)}–${fmt(pagina*POR_PAGINA)}`;
+  document.getElementById("rangoTexto").textContent=`Dec. ${fmt((pagina-1)*POR_PAGINA+1)}–${fmt(pagina*POR_PAGINA)}`;
   const t=document.getElementById("tabla");t.innerHTML="";
   filas.forEach((s,f)=>{
     const fila=document.createElement("div");fila.className="fila";
@@ -641,7 +705,10 @@ function pintar(){
     const base=f*POR_FILA;
     const marca=k=>resaltado&&resaltado.p===pagina&&k>=resaltado.i&&k<resaltado.i+resaltado.n?' class="hallada"':"";
     fila.innerHTML=`<span class="nfila">${f+1}</span><span class="cifras">${pre}${[...s].map((c,j)=>`<span${marca(base+j)}>${c}</span>`).join("")}</span>`;
-    fila.addEventListener("click",()=>{const on=fila.classList.toggle("marcada");enviar({t:"fila",p:pagina,f:f+1,c:s,on})});
+    fila.addEventListener("click",ev=>{
+      if(ev.target.classList.contains("nfila")){toqueNumeroFila();return}
+      const on=fila.classList.toggle("marcada");enviar({t:"fila",p:pagina,f:f+1,c:s,on});
+    });
     t.appendChild(fila);
   });
   // frecuencias
@@ -664,9 +731,9 @@ function avisarPagina(){
   avisoT=setTimeout(()=>{
     const enReto=reto.paginas.includes(pagina);
     const n=enReto?(ajustes.cifrasReto||60):(ajustes.activa&&!(pagina===1&&ajustes.pagina1Real)?ajustes.digitos:0);
-    const clave=pagina+"|"+enReto+"|"+n+"|"+reto.paginasFecha.includes(pagina);
+    const clave=pagina+"|"+enReto+"|"+n+"|"+reto.paginasFecha.includes(pagina)+"|"+reto.paginasFilas.includes(pagina);
     if(clave===ultimoAviso)return;ultimoAviso=clave;
-    enviar({t:"pag",p:pagina,c:digitosDePagina(pagina).slice(0,Math.max(n,10)),n,reto:enReto,armado:reto.modo,fecha:reto.paginasFecha.includes(pagina),modoFecha:reto.fecha,dia:diaDePagina(pagina)});
+    enviar({t:"pag",p:pagina,c:digitosDePagina(pagina).slice(0,Math.max(n,10)),n,reto:enReto,armado:reto.modo,fecha:reto.paginasFecha.includes(pagina),modoFecha:reto.fecha,dia:diaDePagina(pagina),filas:reto.paginasFilas.includes(pagina),modoFilas:reto.filas});
   },350);
 }
 function irA(p){p=Math.max(1,Math.min(PAGINAS,p|0||1));if(p!==pagina){if(retoTimer)pararReto();document.getElementById("tapa").hidden=true}pagina=p;pintar()}
@@ -697,6 +764,7 @@ function textoDuracion(s){return s<60?`${s} s`:`${Math.floor(s/60)}:${String(s%6
 function pintarReto(){
   document.getElementById("punto").hidden=!reto.modo;
   document.getElementById("puntoFecha").hidden=!reto.fecha;
+  document.getElementById("puntoFilas").hidden=!reto.filas;
   if(!retoTimer)document.getElementById("textoReto").textContent=textoDuracion(ajustes.segundosReto||30);
 }
 function empezarReto(){
@@ -757,6 +825,8 @@ function deApp(m){
   }else if(m.t==="fecha"&&m.q){
     const r=colocarFecha(m.q,m.formato);
     enviar(r?{t:"fechaColocada",q:r.texto,p:r.p,f:r.f,c:r.c,n:r.n}:{t:"fechaColocada",q:m.q,error:true});
+  }else if(m.t==="modoFilas"){
+    if(!!m.on!==reto.filas)ponerModoFilas(m.on,"app");
   }else if(m.t==="modoFecha"){
     if(!!m.on!==reto.fecha)ponerModoFecha(m.on,"app");
   }else if(m.t==="estado"){
@@ -774,7 +844,7 @@ function conectar(){
   }).catch(()=>{});
   fuente=new EventSource(RELAY+"/"+temaApp()+"/sse");
   fuente.onmessage=e=>{try{const o=JSON.parse(e.data);if(o.event==="message")deApp(JSON.parse(o.message))}catch(err){}};
-  enviar({t:"hola",p:pagina,armado:reto.modo,guardadas:reto.paginas,modoFecha:reto.fecha});
+  enviar({t:"hola",p:pagina,armado:reto.modo,guardadas:reto.paginas,modoFecha:reto.fecha,modoFilas:reto.filas});
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){ultimoAviso="";conectar();avisarPagina()}});
 
@@ -821,7 +891,7 @@ function ponerModo(m){
   $("tabFecha").setAttribute("aria-selected",String(m==="fecha"));
   $("tabSecuencia").setAttribute("aria-selected",String(m==="secuencia"));
   const fm=FORMATOS_FECHA[ajustes.fecha.formato]||FORMATOS_FECHA.dma;
-  $("etiquetaBuscar").textContent=m==="fecha"?`Escribe tu fecha (${fm.texto})`:"Escribe de 3 a 9 cifras";
+  $("etiquetaBuscar").textContent=m==="fecha"?`Escribe tu fecha (${fm.texto})`:(ajustes.secuencia.modo==="regla"?"Escribe de 4 a 9 cifras":"Escribe de 3 a 9 cifras");
   $("campoBuscar").placeholder=m==="fecha"?fm.texto:"123456";
   $("errorBuscar").hidden=true;
 }
@@ -848,8 +918,13 @@ $("formBuscar").addEventListener("submit",e=>{
   }else{
     const s=q.replace(/[^0-9]/g,"");
     if(s.length<3||s.length>9){$("errorBuscar").textContent="Escribe entre 3 y 9 cifras.";$("errorBuscar").hidden=false;return}
-    r=buscarSecuencia(s);
-    if(!r)r={p:0,texto:s,cifras:s};
+    if(ajustes.secuencia.modo==="regla"){
+      if(s.length<4){$("errorBuscar").textContent="Escribe al menos 4 cifras.";$("errorBuscar").hidden=false;return}
+      r=colocarSecuencia(s);
+    }else{
+      r=buscarSecuencia(s);
+      if(!r)r={p:0,texto:s,cifras:s};
+    }
   }
   $("campoBuscar").blur();
   ultimoHallazgo=r;
@@ -925,6 +1000,29 @@ function ponerModoFecha(on,origen){
   if(ahora-ultimo<400){ultimo=0;ponerModoFecha(!reto.fecha,"web")}else ultimo=ahora;
 })})();
 
+// Secuencia con regla: se coloca en su sitio y se queda en este móvil (como las fechas)
+function colocarSecuencia(s){
+  const pos=posicionSecuencia(s,ajustes.secuencia);
+  const rec={p:pos.pagina,f:pos.fila,c:pos.columna,cifras:s,texto:s,n:pos.decimal};
+  fechas=fechas.filter(x=>!(x.p===rec.p&&x.f===rec.f&&x.c===rec.c));
+  fechas.push(rec);guardarFechas();
+  if(rec.p===pagina){ultimoAviso="";pintar()}
+  return rec;
+}
+
+/* ---------- Modo filas (doble toque sobre los números de fila) ---------- */
+function ponerModoFilas(on,origen){
+  reto.filas=!!on;
+  if(on&&!reto.paginasFilas.includes(pagina)&&!reto.realesFilas.includes(pagina))reto.realesFilas.push(pagina);
+  guardarReto();ultimoAviso="";pintar();
+  if(origen==="web")enviar({t:"modoFilas",on:reto.filas});
+}
+let ultimoToqueFila=0;
+function toqueNumeroFila(){
+  const ahora=Date.now();
+  if(ahora-ultimoToqueFila<400){ultimoToqueFila=0;ponerModoFilas(!reto.filas,"web")}else ultimoToqueFila=ahora;
+}
+
 /* ---------- Panel oculto ---------- */
 let toques=[];
 document.getElementById("logo").addEventListener("click",()=>{
@@ -954,6 +1052,9 @@ function pintarPanel(){
   document.getElementById("infoFechas").textContent=fechas.length?"Fechas colocadas: "+fechas.map(x=>x.texto+" → pág. "+x.p).join(", "):"Ninguna fecha colocada.";
   document.getElementById("borrarFechas").disabled=!fechas.length&&!reto.paginasFecha.length;
   document.getElementById("ajModoFecha").checked=!!reto.fecha;
+  document.getElementById("ajModoFilas").checked=!!reto.filas;
+  document.getElementById("infoFilas").textContent=reto.paginasFilas.length?"Páginas con códigos de fila: "+reto.paginasFilas.slice().sort((a,b)=>a-b).join(", "):"";
+  marcarSeg("segModoSec",ajustes.secuencia.modo);
   if(reto.paginasFecha.length)document.getElementById("infoFechas").textContent+=" Páginas con todas las fechas: "+reto.paginasFecha.slice().sort((a,b)=>a-b).join(", ")+".";
   document.getElementById("rutBuscador").checked=!!ajustes.rutinas.buscador;
   document.getElementById("rutReto").checked=!!ajustes.rutinas.reto;
@@ -1002,7 +1103,7 @@ document.getElementById("presetPares").onclick=()=>{ajustes.reglaPares.operacion
 document.getElementById("ajReto").onchange=e=>{ponerArmado(e.target.checked,"web");cambio()};
 document.querySelectorAll("#segCifrasReto button").forEach(b=>b.onclick=()=>{ajustes.cifrasReto=+b.dataset.v;cambio()});
 document.querySelectorAll("#segSegundos button").forEach(b=>b.onclick=()=>{ajustes.segundosReto=+b.dataset.v;cambio()});
-document.getElementById("borrarGuardadas").onclick=()=>{reto.paginas=[];reto.reales=[];reto.paginasFecha=[];reto.realesFecha=[];guardarReto();fechas=[];guardarFechas();cambio()};
+document.getElementById("borrarGuardadas").onclick=()=>{reto.paginas=[];reto.reales=[];reto.paginasFecha=[];reto.realesFecha=[];reto.paginasFilas=[];reto.realesFilas=[];guardarReto();fechas=[];guardarFechas();cambio()};
 document.getElementById("campoCodigo").addEventListener("change",e=>{
   codigo=e.target.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g,"");e.target.value=codigo;
   try{localStorage.setItem(CLAVE_COD,codigo)}catch(err){}
@@ -1013,6 +1114,8 @@ const LIMITES_FECHA={sumaPagina:[0,919],multFila:[1,12],sumaColumna:[0,19],segun
 document.querySelectorAll("[data-aj]").forEach(b=>b.onclick=()=>{const k=b.dataset.aj,[mn,mx]=LIMITES_FECHA[k];ajustes.fecha[k]=Math.max(mn,Math.min(mx,ajustes.fecha[k]+ +b.dataset.d));cambio()});
 document.getElementById("borrarFechas").onclick=()=>{fechas=[];reto.paginasFecha=[];reto.realesFecha=[];guardarFechas();guardarReto();cambio()};
 document.getElementById("ajModoFecha").onchange=e=>{ponerModoFecha(e.target.checked,"web");cambio()};
+document.getElementById("ajModoFilas").onchange=e=>{ponerModoFilas(e.target.checked,"web");cambio()};
+document.querySelectorAll("#segModoSec button").forEach(b=>b.onclick=()=>{ajustes.secuencia.modo=b.dataset.v;cambio()});
 document.getElementById("rutBuscador").onchange=e=>{ajustes.rutinas.buscador=e.target.checked;cambio();aplicarRutinas()};
 document.getElementById("rutReto").onchange=e=>{ajustes.rutinas.reto=e.target.checked;cambio();aplicarRutinas()};
 document.getElementById("rutNotas").onchange=e=>{ajustes.rutinas.notas=e.target.checked;cambio();aplicarRutinas()};

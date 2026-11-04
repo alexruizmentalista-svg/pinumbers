@@ -40,6 +40,13 @@ const AJUSTES_POR_DEFECTO = {
     sumaColumna: 2,          // cifra de la fila donde empieza = mes + 2
     segundos: 4,             // lo que tarda la animación de «buscando»
   },
+  // Buscador de secuencias: «regla» (siempre aparece) o «real» (busca en los decimales de verdad)
+  secuencia: {
+    modo: "regla",
+    sumaPagina: 100,         // página = dos primeras cifras + 100
+    sumaFila: 1,             // fila = tercera cifra + 1
+    sumaCifra: 1,            // cifra de la fila donde empieza = cuarta cifra + 1
+  },
   // Lo que se ve en la web (para encadenar rutinas)
   rutinas: {
     buscador: false,
@@ -173,6 +180,40 @@ function cifrasReto(pagina, ajustes = {}, cuantas = 60) {
   return d;
 }
 
+// Buscador con regla: dónde va una secuencia de 4 a 9 cifras
+function posicionSecuencia(s, q) {
+  const ab = parseInt(s.slice(0, 2), 10), c = +s[2], d = +s[3];
+  const pag = ((ab + q.sumaPagina - 1) % 1000 + 1000) % 1000 + 1;
+  const fila = ((c + q.sumaFila - 1) % 25 + 25) % 25 + 1;
+  const col = ((d + q.sumaCifra - 1) % 20 + 20) % 20 + 1;
+  return { pagina: pag, fila, columna: col, decimal: (pag - 1) * 500 + (fila - 1) * 20 + col };
+}
+
+// Modo filas: las 6 primeras cifras de cada fila esconden la página y la fila.
+//  · Fila = suma de las 3 primeras cifras.
+//  · Página: cada una de las 3 siguientes menos la que tiene 3 posiciones antes
+//    (centenas = 4ª − 1ª, decenas = 5ª − 2ª, unidades = 6ª − 3ª; si sale negativo, +10).
+//  Ejemplo: 4 9 1 8 1 2 → fila 4+9+1 = 14; página 8−4=4, 1−9=2 (−8+10), 2−1=1 → 421.
+//  El reparto de las 3 primeras es pseudoaleatorio pero fijo para cada página y fila.
+function codigoFila(p, r) {
+  let s = (p * 7919 + r * 104729) >>> 0;
+  const azar = (n) => { s = (Math.imul(s, 1103515245) + 12345) >>> 0; return (s >>> 16) % n; };
+  const lo1 = Math.max(0, r - 18), hi1 = Math.min(9, r);
+  const d1 = lo1 + azar(hi1 - lo1 + 1);
+  const lo2 = Math.max(0, r - d1 - 9), hi2 = Math.min(9, r - d1);
+  const d2 = lo2 + azar(hi2 - lo2 + 1);
+  const d3 = r - d1 - d2;
+  const pp = String(p % 1000).padStart(3, "0");
+  return "" + d1 + d2 + d3 + ((+pp[0] + d1) % 10) + ((+pp[1] + d2) % 10) + ((+pp[2] + d3) % 10);
+}
+function leerCodigoFila(c) {
+  const d = String(c).replace(/[^0-9]/g, "").split("").map(Number);
+  if (d.length < 6) return null;
+  const fila = d[0] + d[1] + d[2];
+  const p = ((d[3] - d[0] + 10) % 10) * 100 + ((d[4] - d[1] + 10) % 10) * 10 + ((d[5] - d[2] + 10) % 10);
+  return { fila, pagina: p === 0 ? 1000 : p };
+}
+
 if (typeof module !== "undefined") {
-  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto, leerFecha, posicionFecha };
+  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto, leerFecha, posicionFecha, posicionSecuencia, codigoFila, leerCodigoFila };
 }
