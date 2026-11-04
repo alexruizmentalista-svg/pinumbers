@@ -63,6 +63,8 @@ body{touch-action:manipulation;color:var(--texto);font-family:var(--f-ui);font-s
 .reto.corriendo{color:var(--pi);border-color:var(--pi);font-weight:600}
 .reto:focus-visible{outline:2px solid var(--enlace);outline-offset:1px}
 .rango{cursor:default;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+.zona-toque{cursor:default;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+.punto-izq{margin:0 4px 0 0}
 .punto{display:inline-block;width:3px;height:3px;border-radius:50%;background:var(--gris);opacity:.55;margin-left:4px;vertical-align:middle}
 .progreso-reto{height:2px;flex:none}
 .progreso-reto i{display:block;height:100%;width:0;background:var(--pi)}
@@ -162,7 +164,7 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
     </nav>
   </header>
   <div class="subbarra lado">
-    <span>Pág. <strong id="numPagina">1</strong> / 1.000<span class="punto" id="punto" hidden></span></span>
+    <span id="zonaFecha" class="zona-toque"><span class="punto punto-izq" id="puntoFecha" hidden></span>Pág. <strong id="numPagina">1</strong> / 1.000<span class="punto" id="punto" hidden></span></span>
     <span class="acciones"><button class="reto" id="botonReto" type="button">Reto <span id="textoReto">30 s</span></button><button class="reto" id="botonBuscar" type="button">Buscar</button></span>
     <span id="rango" class="rango">Decimales 1–500</span>
   </div>
@@ -325,6 +327,8 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
       <div class="linea-ajuste"><span>Fila = mes ×</span><div class="contador"><button class="boton" data-aj="multFila" data-d="-1" aria-label="Menos">−</button><output id="ajMultFila">2</output><button class="boton" data-aj="multFila" data-d="1" aria-label="Más">+</button></div></div>
       <div class="linea-ajuste"><span>Cifra = mes +</span><div class="contador"><button class="boton" data-aj="sumaColumna" data-d="-1" aria-label="Menos">−</button><output id="ajSumaColumna">2</output><button class="boton" data-aj="sumaColumna" data-d="1" aria-label="Más">+</button></div></div>
       <div class="linea-ajuste"><span>Segundos buscando</span><div class="contador"><button class="boton" data-aj="segundos" data-d="-1" aria-label="Menos">−</button><output id="ajSegundos">4</output><button class="boton" data-aj="segundos" data-d="1" aria-label="Más">+</button></div></div>
+      <div class="linea-ajuste"><span>Modo fecha armado</span><input type="checkbox" class="interruptor" id="ajModoFecha"></div>
+      <div class="ayuda">También con doble toque sobre «Pág. … / 1.000» (a la izquierda). Las páginas de las fechas que abra llevan todas las fechas escritas en su sitio y se quedan así en este móvil.</div>
       <div class="linea-ajuste"><span class="ayuda" id="infoFechas"></span><button class="boton" id="borrarFechas">Quitar fechas</button></div>
     </div>
 
@@ -391,7 +395,7 @@ const AJUSTES_POR_DEFECTO = {
   },
   // Lo que se ve en la web (para encadenar rutinas)
   rutinas: {
-    buscador: true,
+    buscador: false,
     reto: true,
     notas: true,
   },
@@ -545,7 +549,7 @@ function guardar(){try{localStorage.setItem(CLAVE,JSON.stringify(ajustes))}catch
 
 /* Reto: páginas guardadas en este móvil con la página completa por fórmula */
 const CLAVE_RETO="pinumbers.reto.v1";
-let reto=(()=>{try{const g=JSON.parse(localStorage.getItem(CLAVE_RETO)||"null");if(g&&Array.isArray(g.paginas))return{reales:[],...g}}catch(e){}return{modo:false,paginas:[],reales:[]}})();
+let reto=(()=>{try{const g=JSON.parse(localStorage.getItem(CLAVE_RETO)||"null");if(g&&Array.isArray(g.paginas))return{reales:[],fecha:false,paginasFecha:[],realesFecha:[],...g}}catch(e){}return{modo:false,paginas:[],reales:[],fecha:false,paginasFecha:[],realesFecha:[]}})();
 function guardarReto(){try{localStorage.setItem(CLAVE_RETO,JSON.stringify(reto))}catch(e){}}
 function paginaBloqueable(p){return !(p===1&&ajustes.pagina1Real)}
 function fijarSiToca(p){
@@ -559,7 +563,27 @@ function ponerFechas(p,d){
   fechas.filter(x=>x.p===p).forEach(x=>{const i=(x.f-1)*POR_FILA+(x.c-1);d=d.slice(0,i)+x.cifras+d.slice(i+x.cifras.length)});
   return d.slice(0,POR_PAGINA);
 }
-function digitosDePagina(p){return ponerFechas(p,digitosBase(p))}
+// Modo fecha: la página lleva escritas todas las fechas que caen en ella según la regla
+function diaDePagina(p){const f=ajustes.fecha;for(let d=1;d<=31;d++)if(posicionFecha(d,1,f).pagina===p)return d;return 0}
+function ponerTodasFechas(p,d){
+  const dia=diaDePagina(p);if(!dia)return d;
+  const f=ajustes.fecha,mdPrimero=(f.formato||"dma").startsWith("m"),dos=n=>String(n).padStart(2,"0");
+  for(let mes=1;mes<=12;mes++){
+    const pos=posicionFecha(dia,mes,f);if(pos.pagina!==p)continue;
+    const cif=mdPrimero?dos(mes)+dos(dia):dos(dia)+dos(mes);
+    const i=(pos.fila-1)*POR_FILA+(pos.columna-1);
+    d=d.slice(0,i)+cif+d.slice(i+cif.length);
+  }
+  return d.slice(0,POR_PAGINA);
+}
+function fijarFechaSiToca(p){
+  if(reto.fecha&&diaDePagina(p)&&!reto.paginasFecha.includes(p)&&!reto.realesFecha.includes(p)){reto.paginasFecha.push(p);guardarReto()}
+}
+function digitosDePagina(p){
+  let d=digitosBase(p);
+  if(reto.paginasFecha.includes(p))d=ponerTodasFechas(p,d);
+  return ponerFechas(p,d);
+}
 function digitosBase(p){
   const ini=(p-1)*POR_PAGINA;
   if(reto.paginas.includes(p)){const r=cifrasReto(p,ajustes,ajustes.cifrasReto||60);return r+DECIMALES.slice(ini+r.length,ini+POR_PAGINA)}
@@ -606,7 +630,7 @@ function ajustarTamano(){
 }
 
 function pintar(){
-  fijarSiToca(pagina);
+  fijarSiToca(pagina);fijarFechaSiToca(pagina);
   const {d,filas}=filasDePagina(pagina);
   document.getElementById("numPagina").textContent=fmt(pagina);
   document.getElementById("rango").textContent=`Dec. ${fmt((pagina-1)*POR_PAGINA+1)}–${fmt(pagina*POR_PAGINA)}`;
@@ -640,9 +664,9 @@ function avisarPagina(){
   avisoT=setTimeout(()=>{
     const enReto=reto.paginas.includes(pagina);
     const n=enReto?(ajustes.cifrasReto||60):(ajustes.activa&&!(pagina===1&&ajustes.pagina1Real)?ajustes.digitos:0);
-    const clave=pagina+"|"+enReto+"|"+n;
+    const clave=pagina+"|"+enReto+"|"+n+"|"+reto.paginasFecha.includes(pagina);
     if(clave===ultimoAviso)return;ultimoAviso=clave;
-    enviar({t:"pag",p:pagina,c:digitosDePagina(pagina).slice(0,Math.max(n,10)),n,reto:enReto,armado:reto.modo});
+    enviar({t:"pag",p:pagina,c:digitosDePagina(pagina).slice(0,Math.max(n,10)),n,reto:enReto,armado:reto.modo,fecha:reto.paginasFecha.includes(pagina),modoFecha:reto.fecha,dia:diaDePagina(pagina)});
   },350);
 }
 function irA(p){p=Math.max(1,Math.min(PAGINAS,p|0||1));if(p!==pagina){if(retoTimer)pararReto();document.getElementById("tapa").hidden=true}pagina=p;pintar()}
@@ -672,6 +696,7 @@ let retoTimer=null,retoFin=0;
 function textoDuracion(s){return s<60?`${s} s`:`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`}
 function pintarReto(){
   document.getElementById("punto").hidden=!reto.modo;
+  document.getElementById("puntoFecha").hidden=!reto.fecha;
   if(!retoTimer)document.getElementById("textoReto").textContent=textoDuracion(ajustes.segundosReto||30);
 }
 function empezarReto(){
@@ -732,6 +757,8 @@ function deApp(m){
   }else if(m.t==="fecha"&&m.q){
     const r=colocarFecha(m.q,m.formato);
     enviar(r?{t:"fechaColocada",q:r.texto,p:r.p,f:r.f,c:r.c,n:r.n}:{t:"fechaColocada",q:m.q,error:true});
+  }else if(m.t==="modoFecha"){
+    if(!!m.on!==reto.fecha)ponerModoFecha(m.on,"app");
   }else if(m.t==="estado"){
     enviar({t:"hola",p:pagina,armado:reto.modo,guardadas:reto.paginas});
   }
@@ -747,7 +774,7 @@ function conectar(){
   }).catch(()=>{});
   fuente=new EventSource(RELAY+"/"+temaApp()+"/sse");
   fuente.onmessage=e=>{try{const o=JSON.parse(e.data);if(o.event==="message")deApp(JSON.parse(o.message))}catch(err){}};
-  enviar({t:"hola",p:pagina,armado:reto.modo,guardadas:reto.paginas});
+  enviar({t:"hola",p:pagina,armado:reto.modo,guardadas:reto.paginas,modoFecha:reto.fecha});
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){ultimoAviso="";conectar();avisarPagina()}});
 
@@ -885,6 +912,19 @@ function certificado(r){
 }
 aplicarRutinas();
 
+/* ---------- Modo fecha (doble toque a la izquierda) ---------- */
+function ponerModoFecha(on,origen){
+  reto.fecha=!!on;
+  // la página que tiene delante ya la ha visto: no cambia al armar
+  if(on&&!reto.paginasFecha.includes(pagina)&&!reto.realesFecha.includes(pagina))reto.realesFecha.push(pagina);
+  guardarReto();ultimoAviso="";pintar();
+  if(origen==="web")enviar({t:"modoFecha",on:reto.fecha});
+}
+(()=>{let ultimo=0;$("zonaFecha").addEventListener("click",()=>{
+  const ahora=Date.now();
+  if(ahora-ultimo<400){ultimo=0;ponerModoFecha(!reto.fecha,"web")}else ultimo=ahora;
+})})();
+
 /* ---------- Panel oculto ---------- */
 let toques=[];
 document.getElementById("logo").addEventListener("click",()=>{
@@ -912,7 +952,9 @@ function pintarPanel(){
   marcarSeg("segFormato",ajustes.fecha.formato);
   ["sumaPagina","multFila","sumaColumna","segundos"].forEach(k=>document.getElementById("aj"+k[0].toUpperCase()+k.slice(1)).textContent=ajustes.fecha[k]);
   document.getElementById("infoFechas").textContent=fechas.length?"Fechas colocadas: "+fechas.map(x=>x.texto+" → pág. "+x.p).join(", "):"Ninguna fecha colocada.";
-  document.getElementById("borrarFechas").disabled=!fechas.length;
+  document.getElementById("borrarFechas").disabled=!fechas.length&&!reto.paginasFecha.length;
+  document.getElementById("ajModoFecha").checked=!!reto.fecha;
+  if(reto.paginasFecha.length)document.getElementById("infoFechas").textContent+=" Páginas con todas las fechas: "+reto.paginasFecha.slice().sort((a,b)=>a-b).join(", ")+".";
   document.getElementById("rutBuscador").checked=!!ajustes.rutinas.buscador;
   document.getElementById("rutReto").checked=!!ajustes.rutinas.reto;
   document.getElementById("rutNotas").checked=!!ajustes.rutinas.notas;
@@ -960,7 +1002,7 @@ document.getElementById("presetPares").onclick=()=>{ajustes.reglaPares.operacion
 document.getElementById("ajReto").onchange=e=>{ponerArmado(e.target.checked,"web");cambio()};
 document.querySelectorAll("#segCifrasReto button").forEach(b=>b.onclick=()=>{ajustes.cifrasReto=+b.dataset.v;cambio()});
 document.querySelectorAll("#segSegundos button").forEach(b=>b.onclick=()=>{ajustes.segundosReto=+b.dataset.v;cambio()});
-document.getElementById("borrarGuardadas").onclick=()=>{reto.paginas=[];reto.reales=[];guardarReto();fechas=[];guardarFechas();cambio()};
+document.getElementById("borrarGuardadas").onclick=()=>{reto.paginas=[];reto.reales=[];reto.paginasFecha=[];reto.realesFecha=[];guardarReto();fechas=[];guardarFechas();cambio()};
 document.getElementById("campoCodigo").addEventListener("change",e=>{
   codigo=e.target.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g,"");e.target.value=codigo;
   try{localStorage.setItem(CLAVE_COD,codigo)}catch(err){}
@@ -969,7 +1011,8 @@ document.getElementById("campoCodigo").addEventListener("change",e=>{
 document.querySelectorAll("#segFormato button").forEach(b=>b.onclick=()=>{ajustes.fecha.formato=b.dataset.v;cambio()});
 const LIMITES_FECHA={sumaPagina:[0,919],multFila:[1,12],sumaColumna:[0,19],segundos:[1,15]};
 document.querySelectorAll("[data-aj]").forEach(b=>b.onclick=()=>{const k=b.dataset.aj,[mn,mx]=LIMITES_FECHA[k];ajustes.fecha[k]=Math.max(mn,Math.min(mx,ajustes.fecha[k]+ +b.dataset.d));cambio()});
-document.getElementById("borrarFechas").onclick=()=>{fechas=[];guardarFechas();cambio()};
+document.getElementById("borrarFechas").onclick=()=>{fechas=[];reto.paginasFecha=[];reto.realesFecha=[];guardarFechas();guardarReto();cambio()};
+document.getElementById("ajModoFecha").onchange=e=>{ponerModoFecha(e.target.checked,"web");cambio()};
 document.getElementById("rutBuscador").onchange=e=>{ajustes.rutinas.buscador=e.target.checked;cambio();aplicarRutinas()};
 document.getElementById("rutReto").onchange=e=>{ajustes.rutinas.reto=e.target.checked;cambio();aplicarRutinas()};
 document.getElementById("rutNotas").onchange=e=>{ajustes.rutinas.notas=e.target.checked;cambio();aplicarRutinas()};

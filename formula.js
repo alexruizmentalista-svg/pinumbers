@@ -42,7 +42,7 @@ const AJUSTES_POR_DEFECTO = {
   },
   // Lo que se ve en la web (para encadenar rutinas)
   rutinas: {
-    buscador: true,
+    buscador: false,
     reto: true,
     notas: true,
   },
