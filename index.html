@@ -70,6 +70,33 @@ body{touch-action:manipulation;color:var(--texto);font-family:var(--f-ui);font-s
 .tapa-titulo{margin:0;font:600 30px var(--f-tabla)}
 .tapa-texto{margin:0;max-width:32ch;color:var(--gris);font-size:14px}
 .tapa-boton{margin-top:8px;appearance:none;border:1px solid var(--texto);background:var(--texto);color:var(--fondo);border-radius:4px;padding:10px 16px;font:500 14px var(--f-ui);cursor:pointer}
+.acciones{display:flex;gap:6px}
+.cifras span.hallada{background:var(--pi);color:var(--fondo);border-radius:2px}
+.buscador-fondo{position:fixed;inset:0;z-index:40;background:var(--fondo);overflow:auto}
+.buscador-hoja{max-width:560px;margin:0 auto;padding-block:calc(14px + env(safe-area-inset-top,0px)) 32px;display:grid;gap:18px}
+.b-cab{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--regla);padding-bottom:10px}
+.b-cab h2{margin:0;font:600 22px var(--f-tabla)}
+.b-cerrar{appearance:none;border:0;background:none;color:var(--enlace);font:500 15px var(--f-ui);cursor:pointer;padding:6px 0}
+.b-pestanas{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--regla);border-radius:4px;overflow:hidden}
+.b-pestanas button{appearance:none;border:0;background:var(--fondo);color:var(--texto);font:500 13px var(--f-ui);padding:9px 6px;cursor:pointer}
+.b-pestanas button[aria-selected="true"]{background:var(--texto);color:var(--fondo)}
+.b-form{display:grid;gap:8px}
+.b-form label{font-size:13px;color:var(--gris)}
+.b-fila{display:flex;gap:8px}
+.b-fila input{flex:1;min-width:0;height:44px;border:1px solid var(--regla);border-radius:4px;background:var(--fondo);color:var(--texto);font:400 24px var(--f-tabla);letter-spacing:.08em;padding:0 10px;font-variant-numeric:tabular-nums}
+.b-fila input:focus-visible{outline:2px solid var(--enlace);outline-offset:1px}
+.b-fila .botonIr{height:44px;padding:0 16px;font-size:15px}
+.b-error{margin:0;color:var(--pi);font-size:13px}
+.b-progreso,.b-resultado{display:grid;gap:10px}
+.b-estado{margin:0;font:600 15px var(--f-ui)}
+.b-contador{margin:0;font:400 34px var(--f-tabla);font-variant-numeric:tabular-nums}
+.b-barra{height:3px;background:var(--regla)}
+.b-barra i{display:block;height:100%;width:0;background:var(--pi)}
+.b-buscada{margin:0;font:400 30px var(--f-tabla);letter-spacing:.08em;color:var(--pi)}
+.b-ficha{font-size:15px}
+.b-botones{display:flex;gap:10px;flex-wrap:wrap}
+.b-botones .botonIr,.b-botones .reto{height:40px;padding:0 16px;font-size:14px}
+.cert-hoja img{width:100%;border:1px solid var(--regla)}
 .notas{border-top:1px solid var(--regla);padding-block:18px 32px;display:grid;gap:18px;font-size:13px;color:var(--texto)}
 .notas h2{font:600 13px var(--f-ui);margin:0 0 6px;text-transform:uppercase;letter-spacing:.06em;color:var(--gris)}
 .notas p{margin:0;max-width:68ch}
@@ -136,7 +163,7 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
   </header>
   <div class="subbarra lado">
     <span>Pág. <strong id="numPagina">1</strong> / 1.000<span class="punto" id="punto" hidden></span></span>
-    <button class="reto" id="botonReto" type="button">Reto <span id="textoReto">30 s</span></button>
+    <span class="acciones"><button class="reto" id="botonReto" type="button">Reto <span id="textoReto">30 s</span></button><button class="reto" id="botonBuscar" type="button">Buscar</button></span>
     <span id="rango" class="rango">Decimales 1–500</span>
   </div>
   <div class="progreso-reto" aria-hidden="true"><i id="barraReto"></i></div>
@@ -150,7 +177,49 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
   </div>
 </div>
 
-<section class="notas lado">
+<div class="buscador-fondo" id="buscadorFondo" hidden>
+  <div class="buscador-hoja lado" role="dialog" aria-modal="true" aria-labelledby="tituloBuscar">
+    <div class="b-cab">
+      <h2 id="tituloBuscar">Buscar en π</h2>
+      <button class="b-cerrar" id="cerrarBuscar" type="button" aria-label="Cerrar">Cerrar</button>
+    </div>
+    <div class="b-pestanas" role="tablist">
+      <button type="button" role="tab" data-modo="fecha" id="tabFecha">Fecha de nacimiento</button>
+      <button type="button" role="tab" data-modo="secuencia" id="tabSecuencia">Cualquier secuencia</button>
+    </div>
+    <form id="formBuscar" class="b-form">
+      <label for="campoBuscar" id="etiquetaBuscar">Escribe tu fecha (DD/MM/AA)</label>
+      <div class="b-fila"><input id="campoBuscar" inputmode="numeric" autocomplete="off" enterkeyhint="search"><button type="submit" class="botonIr">Buscar</button></div>
+      <p class="b-error" id="errorBuscar" hidden></p>
+    </form>
+    <div class="b-progreso" id="progresoBuscar" hidden>
+      <p class="b-estado">Buscando en 500.000 decimales…</p>
+      <p class="b-contador" id="contadorBuscar">0</p>
+      <div class="b-barra"><i id="barraBuscar"></i></div>
+    </div>
+    <div class="b-resultado" id="resultadoBuscar" hidden>
+      <p class="b-estado" id="estadoResultado">Encontrada</p>
+      <p class="b-buscada" id="buscadaResultado"></p>
+      <dl class="ficha b-ficha">
+        <dt>Página</dt><dd id="resPagina"></dd>
+        <dt>Fila</dt><dd id="resFila"></dd>
+        <dt>Cifra</dt><dd id="resCifra"></dd>
+        <dt>Decimal nº</dt><dd id="resDecimal"></dd>
+      </dl>
+      <div class="b-botones"><button type="button" class="botonIr" id="verEnTabla">Ver en la tabla</button><button type="button" class="reto" id="verCertificado">Certificado</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="buscador-fondo" id="certificadoFondo" hidden>
+  <div class="buscador-hoja lado cert-hoja" role="dialog" aria-modal="true" aria-label="Certificado">
+    <div class="b-cab"><h2>Certificado</h2><button class="b-cerrar" id="cerrarCertificado" type="button">Cerrar</button></div>
+    <img id="imagenCertificado" alt="Certificado de la posición en π">
+    <p class="pie">Mantén pulsada la imagen para guardarla en Fotos.</p>
+  </div>
+</div>
+
+<section class="notas lado" id="seccionNotas">
   <div>
     <h2>Frecuencia de cifras en esta página</h2>
     <div class="tabla-wrap"><table class="frecuencias" id="frecuencias"></table></div>
@@ -249,6 +318,24 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
     </div>
 
     <div class="grupo">
+      <span class="titulo">Tu cumpleaños en π</span>
+      <span class="ayuda">Cómo escribe la fecha:</span>
+      <div class="segmento" id="segFormato"><button data-v="dm">DD/MM</button><button data-v="md">MM/DD</button><button data-v="dma">DD/MM/AA</button><button data-v="mda">MM/DD/AA</button></div>
+      <div class="linea-ajuste"><span>Página = día +</span><div class="contador"><button class="boton" data-aj="sumaPagina" data-d="-1" aria-label="Menos">−</button><output id="ajSumaPagina">50</output><button class="boton" data-aj="sumaPagina" data-d="1" aria-label="Más">+</button></div></div>
+      <div class="linea-ajuste"><span>Fila = mes ×</span><div class="contador"><button class="boton" data-aj="multFila" data-d="-1" aria-label="Menos">−</button><output id="ajMultFila">2</output><button class="boton" data-aj="multFila" data-d="1" aria-label="Más">+</button></div></div>
+      <div class="linea-ajuste"><span>Cifra = mes +</span><div class="contador"><button class="boton" data-aj="sumaColumna" data-d="-1" aria-label="Menos">−</button><output id="ajSumaColumna">2</output><button class="boton" data-aj="sumaColumna" data-d="1" aria-label="Más">+</button></div></div>
+      <div class="linea-ajuste"><span>Segundos buscando</span><div class="contador"><button class="boton" data-aj="segundos" data-d="-1" aria-label="Menos">−</button><output id="ajSegundos">4</output><button class="boton" data-aj="segundos" data-d="1" aria-label="Más">+</button></div></div>
+      <div class="linea-ajuste"><span class="ayuda" id="infoFechas"></span><button class="boton" id="borrarFechas">Quitar fechas</button></div>
+    </div>
+
+    <div class="grupo">
+      <span class="titulo">Qué se ve en la web</span>
+      <div class="linea-ajuste"><span>Buscador</span><input type="checkbox" class="interruptor" id="rutBuscador"></div>
+      <div class="linea-ajuste"><span>Botón del reto</span><input type="checkbox" class="interruptor" id="rutReto"></div>
+      <div class="linea-ajuste"><span>Notas de debajo de la tabla</span><input type="checkbox" class="interruptor" id="rutNotas"></div>
+    </div>
+
+    <div class="grupo">
       <span class="titulo">Código de enlace con la app</span>
       <div class="buscador"><label for="campoCodigo">Código</label><input class="campo" id="campoCodigo" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
       <div class="ayuda">El mismo que pone la app Pi Numbers de tu iPhone. Con él, la web recibe tus ajustes y te manda la página que mira el espectador.</div>
@@ -294,7 +381,56 @@ const AJUSTES_POR_DEFECTO = {
       { op: "+", n: 5 },
     ],
   },
+  // Efecto «tu cumpleaños en π»: dónde aparece la fecha que escribe el espectador
+  fecha: {
+    formato: "dma",          // "dm" | "md" | "dma" | "mda"  (el año siempre con 2 cifras)
+    sumaPagina: 50,          // página = día + 50
+    multFila: 2,             // fila = mes × 2
+    sumaColumna: 2,          // cifra de la fila donde empieza = mes + 2
+    segundos: 4,             // lo que tarda la animación de «buscando»
+  },
+  // Lo que se ve en la web (para encadenar rutinas)
+  rutinas: {
+    buscador: true,
+    reto: true,
+    notas: true,
+  },
 };
+
+const FORMATOS_FECHA = {
+  dm: { orden: ["d", "m"], texto: "DD/MM" },
+  md: { orden: ["m", "d"], texto: "MM/DD" },
+  dma: { orden: ["d", "m", "a"], texto: "DD/MM/AA" },
+  mda: { orden: ["m", "d", "a"], texto: "MM/DD/AA" },
+};
+
+// "14/03/95" → {dia:14, mes:3, anio:95, cifras:"140395"} según el formato; null si no es una fecha
+function leerFecha(texto, formato) {
+  const fm = FORMATOS_FECHA[formato] || FORMATOS_FECHA.dma;
+  const trozos = String(texto).trim().split(/[^0-9]+/).filter(Boolean);
+  let partes;
+  if (trozos.length === fm.orden.length) partes = trozos;
+  else {
+    const s = trozos.join("");
+    if (s.length !== fm.orden.length * 2) return null;
+    partes = fm.orden.map((_, i) => s.slice(i * 2, i * 2 + 2));
+  }
+  const v = {};
+  fm.orden.forEach((k, i) => { v[k] = parseInt(partes[i], 10); });
+  if (!(v.d >= 1 && v.d <= 31 && v.m >= 1 && v.m <= 12)) return null;
+  if (fm.orden.includes("a") && !(v.a >= 0 && v.a <= 99)) return null;
+  const dos = (n) => String(n).padStart(2, "0");
+  return { dia: v.d, mes: v.m, anio: fm.orden.includes("a") ? v.a : null,
+           cifras: fm.orden.map((k) => dos(v[k])).join("") };
+}
+
+// Dónde va la fecha: página = día + sumaPagina, fila = mes × multFila, cifra = mes + sumaColumna
+function posicionFecha(dia, mes, f) {
+  const pag = ((dia + f.sumaPagina - 1) % 1000 + 1000) % 1000 + 1;
+  const fila = ((mes * f.multFila - 1) % 25 + 25) % 25 + 1;
+  const col = ((mes + f.sumaColumna - 1) % 20 + 20) % 20 + 1;
+  return { pagina: pag, fila, columna: col, decimal: (pag - 1) * 500 + (fila - 1) * 20 + col };
+}
 
 function sumaCifras(n) {
   return String(Math.abs(n)).split("").reduce((a, c) => a + Number(c), 0);
@@ -387,7 +523,7 @@ function cifrasReto(pagina, ajustes = {}, cuantas = 60) {
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto };
+  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto, leerFecha, posicionFecha };
 }
 
 
@@ -396,9 +532,14 @@ const CLAVE="pinumbers.ajustes.v1";
 let ajustes=cargar();
 let pagina=1;
 
+function mezclarAjustes(g){
+  const d=JSON.parse(JSON.stringify(AJUSTES_POR_DEFECTO));
+  if(!g)return d;
+  return{...d,...g,reglaPares:{...d.reglaPares,...(g.reglaPares||{})},fecha:{...d.fecha,...(g.fecha||{})},rutinas:{...d.rutinas,...(g.rutinas||{})}};
+}
 function cargar(){
-  try{const g=JSON.parse(localStorage.getItem(CLAVE)||"null");if(g){const d=JSON.parse(JSON.stringify(AJUSTES_POR_DEFECTO));return{...d,...g,reglaPares:{...d.reglaPares,...(g.reglaPares||{})}}}}catch(e){}
-  return JSON.parse(JSON.stringify(AJUSTES_POR_DEFECTO));
+  try{const g=JSON.parse(localStorage.getItem(CLAVE)||"null");if(g)return mezclarAjustes(g)}catch(e){}
+  return mezclarAjustes(null);
 }
 function guardar(){try{localStorage.setItem(CLAVE,JSON.stringify(ajustes))}catch(e){}}
 
@@ -410,7 +551,16 @@ function paginaBloqueable(p){return !(p===1&&ajustes.pagina1Real)}
 function fijarSiToca(p){
   if(reto.modo&&paginaBloqueable(p)&&!reto.paginas.includes(p)&&!reto.reales.includes(p)){reto.paginas.push(p);guardarReto()}
 }
-function digitosDePagina(p){
+/* Fechas colocadas en este móvil (efecto del cumpleaños): se quedan para siempre */
+const CLAVE_FECHAS="pinumbers.fechas.v1";
+let fechas=(()=>{try{const g=JSON.parse(localStorage.getItem(CLAVE_FECHAS)||"[]");if(Array.isArray(g))return g}catch(e){}return[]})();
+function guardarFechas(){try{localStorage.setItem(CLAVE_FECHAS,JSON.stringify(fechas))}catch(e){}}
+function ponerFechas(p,d){
+  fechas.filter(x=>x.p===p).forEach(x=>{const i=(x.f-1)*POR_FILA+(x.c-1);d=d.slice(0,i)+x.cifras+d.slice(i+x.cifras.length)});
+  return d.slice(0,POR_PAGINA);
+}
+function digitosDePagina(p){return ponerFechas(p,digitosBase(p))}
+function digitosBase(p){
   const ini=(p-1)*POR_PAGINA;
   if(reto.paginas.includes(p)){const r=cifrasReto(p,ajustes,ajustes.cifrasReto||60);return r+DECIMALES.slice(ini+r.length,ini+POR_PAGINA)}
   let d=DECIMALES.slice(ini,ini+POR_PAGINA);
@@ -464,7 +614,9 @@ function pintar(){
   filas.forEach((s,f)=>{
     const fila=document.createElement("div");fila.className="fila";
     const pre=(pagina===1&&f===0)?'<span class="entero">3</span><span class="entero">,</span>':"";
-    fila.innerHTML=`<span class="nfila">${f+1}</span><span class="cifras">${pre}${[...s].map(c=>`<span>${c}</span>`).join("")}</span>`;
+    const base=f*POR_FILA;
+    const marca=k=>resaltado&&resaltado.p===pagina&&k>=resaltado.i&&k<resaltado.i+resaltado.n?' class="hallada"':"";
+    fila.innerHTML=`<span class="nfila">${f+1}</span><span class="cifras">${pre}${[...s].map((c,j)=>`<span${marca(base+j)}>${c}</span>`).join("")}</span>`;
     fila.addEventListener("click",()=>{const on=fila.classList.toggle("marcada");enviar({t:"fila",p:pagina,f:f+1,c:s,on})});
     t.appendChild(fila);
   });
@@ -570,14 +722,16 @@ function deApp(m){
   if(!m||!m.t)return;
   ultimaRespuesta=Date.now();
   if(m.t==="cfg"&&m.ajustes){
-    const d=JSON.parse(JSON.stringify(AJUSTES_POR_DEFECTO));
-    ajustes={...d,...m.ajustes,reglaPares:{...d.reglaPares,...(m.ajustes.reglaPares||{})}};
-    guardar();ultimoAviso="";pintar();
+    ajustes=mezclarAjustes(m.ajustes);
+    guardar();ultimoAviso="";pintar();aplicarRutinas();
     if(!document.getElementById("panelFondo").hidden)pintarPanel();
   }else if(m.t==="armar"){
     if(!!m.on!==reto.modo)ponerArmado(m.on,"app");
   }else if(m.t==="limpiar"){
-    reto.paginas=[];reto.reales=[];guardarReto();ultimoAviso="";pintar();
+    reto.paginas=[];reto.reales=[];guardarReto();fechas=[];guardarFechas();ultimoAviso="";pintar();
+  }else if(m.t==="fecha"&&m.q){
+    const r=colocarFecha(m.q,m.formato);
+    enviar(r?{t:"fechaColocada",q:r.texto,p:r.p,f:r.f,c:r.c,n:r.n}:{t:"fechaColocada",q:m.q,error:true});
   }else if(m.t==="estado"){
     enviar({t:"hola",p:pagina,armado:reto.modo,guardadas:reto.paginas});
   }
@@ -596,6 +750,140 @@ function conectar(){
   enviar({t:"hola",p:pagina,armado:reto.modo,guardadas:reto.paginas});
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){ultimoAviso="";conectar();avisarPagina()}});
+
+
+/* ---------- Buscar en π (cumpleaños y secuencias) ---------- */
+let resaltado=null,modoBuscar="fecha",ultimoHallazgo=null,buscando=null;
+const $=id=>document.getElementById(id);
+function aplicarRutinas(){
+  const r=ajustes.rutinas||{};
+  $("botonBuscar").hidden=!r.buscador;
+  $("botonReto").hidden=!r.reto;
+  $("seccionNotas").hidden=!r.notas;
+}
+function textoFecha(fe,formato){
+  const fm=FORMATOS_FECHA[formato]||FORMATOS_FECHA.dma,dos=n=>String(n).padStart(2,"0");
+  return fm.orden.map(k=>dos(k==="d"?fe.dia:k==="m"?fe.mes:fe.anio)).join("/");
+}
+// Coloca la fecha según la regla y la deja guardada en este móvil
+function colocarFecha(texto,formato){
+  const fmt=formato||ajustes.fecha.formato;
+  const fe=leerFecha(texto,fmt);if(!fe)return null;
+  const pos=posicionFecha(fe.dia,fe.mes,ajustes.fecha);
+  const rec={p:pos.pagina,f:pos.fila,c:pos.columna,cifras:fe.cifras,texto:textoFecha(fe,fmt),n:pos.decimal};
+  fechas=fechas.filter(x=>!(x.p===rec.p&&x.f===rec.f&&x.c===rec.c));
+  fechas.push(rec);guardarFechas();
+  if(rec.p===pagina){ultimoAviso="";pintar()}
+  return rec;
+}
+// Búsqueda real en lo que muestra el libro (página a página, tal como se ve)
+function buscarSecuencia(s){
+  for(let p=1;p<=PAGINAS;p++){
+    const d=digitosDePagina(p);const i=d.indexOf(s);
+    if(i>=0)return{p,f:Math.floor(i/POR_FILA)+1,c:i%POR_FILA+1,n:(p-1)*POR_PAGINA+i+1,cifras:s,texto:s};
+  }
+  // También si cruza de una página a la siguiente
+  for(let p=1;p<PAGINAS;p++){
+    const d=digitosDePagina(p).slice(-s.length+1)+digitosDePagina(p+1).slice(0,s.length-1);const i=d.indexOf(s);
+    if(i>=0){const k=POR_PAGINA-(s.length-1)+i;return{p,f:Math.floor(k/POR_FILA)+1,c:k%POR_FILA+1,n:(p-1)*POR_PAGINA+k+1,cifras:s,texto:s}}
+  }
+  return null;
+}
+function ponerModo(m){
+  modoBuscar=m;
+  $("tabFecha").setAttribute("aria-selected",String(m==="fecha"));
+  $("tabSecuencia").setAttribute("aria-selected",String(m==="secuencia"));
+  const fm=FORMATOS_FECHA[ajustes.fecha.formato]||FORMATOS_FECHA.dma;
+  $("etiquetaBuscar").textContent=m==="fecha"?`Escribe tu fecha (${fm.texto})`:"Escribe de 3 a 9 cifras";
+  $("campoBuscar").placeholder=m==="fecha"?fm.texto:"123456";
+  $("errorBuscar").hidden=true;
+}
+function abrirBuscador(){
+  $("buscadorFondo").hidden=false;$("progresoBuscar").hidden=true;$("resultadoBuscar").hidden=true;$("formBuscar").hidden=false;
+  $("campoBuscar").value="";ponerModo(modoBuscar);
+  enviar({t:"buscador",abierto:true});
+  setTimeout(()=>$("campoBuscar").focus(),50);
+}
+function cerrarBuscador(){$("buscadorFondo").hidden=true;cancelarBusqueda()}
+function cancelarBusqueda(){if(buscando){clearInterval(buscando);buscando=null}}
+$("botonBuscar").onclick=abrirBuscador;
+$("cerrarBuscar").onclick=cerrarBuscador;
+$("tabFecha").onclick=()=>ponerModo("fecha");
+$("tabSecuencia").onclick=()=>ponerModo("secuencia");
+$("campoBuscar").addEventListener("input",e=>enviar({t:"escribe",q:e.target.value,modo:modoBuscar}));
+$("formBuscar").addEventListener("submit",e=>{
+  e.preventDefault();
+  const q=$("campoBuscar").value.trim();
+  let r=null;
+  if(modoBuscar==="fecha"){
+    r=colocarFecha(q);
+    if(!r){$("errorBuscar").textContent="Esa fecha no es válida. Escríbela así: "+(FORMATOS_FECHA[ajustes.fecha.formato]||FORMATOS_FECHA.dma).texto;$("errorBuscar").hidden=false;return}
+  }else{
+    const s=q.replace(/[^0-9]/g,"");
+    if(s.length<3||s.length>9){$("errorBuscar").textContent="Escribe entre 3 y 9 cifras.";$("errorBuscar").hidden=false;return}
+    r=buscarSecuencia(s);
+    if(!r)r={p:0,texto:s,cifras:s};
+  }
+  $("campoBuscar").blur();
+  ultimoHallazgo=r;
+  // Te llega ya, mientras la web «busca»
+  enviar({t:"busca",modo:modoBuscar,q:r.texto,p:r.p,f:r.f,c:r.c,n:r.n,ok:r.p>0});
+  animarBusqueda(r);
+});
+function animarBusqueda(r){
+  $("formBuscar").hidden=true;$("resultadoBuscar").hidden=true;$("progresoBuscar").hidden=false;
+  const total=(ajustes.fecha.segundos||4)*1000,t0=Date.now(),meta=r.p>0?r.n:500000;
+  cancelarBusqueda();
+  buscando=setInterval(()=>{
+    const k=Math.min(1,(Date.now()-t0)/total);
+    const suave=1-Math.pow(1-k,2);
+    $("contadorBuscar").textContent=fmt(Math.floor(meta*suave));
+    $("barraBuscar").style.width=(k*100)+"%";
+    if(k>=1){cancelarBusqueda();mostrarResultado(r)}
+  },60);
+}
+function mostrarResultado(r){
+  $("progresoBuscar").hidden=true;$("resultadoBuscar").hidden=false;
+  const ok=r.p>0;
+  $("estadoResultado").textContent=ok?"Encontrada":"No aparece en los primeros 500.000 decimales";
+  $("buscadaResultado").textContent=r.texto;
+  [["resPagina",r.p],["resFila",r.f],["resCifra",r.c],["resDecimal",r.n]].forEach(([id,v])=>$(id).textContent=ok?fmt(v):"—");
+  $("verEnTabla").hidden=!ok;$("verCertificado").hidden=!ok;
+}
+$("verEnTabla").onclick=()=>{
+  const r=ultimoHallazgo;if(!r||!r.p)return;
+  resaltado={p:r.p,i:(r.f-1)*POR_FILA+(r.c-1),n:r.cifras.length};
+  cerrarBuscador();irA(r.p);ultimoAviso="";pintar();
+  enviar({t:"verTabla",p:r.p});
+};
+$("verCertificado").onclick=()=>{const r=ultimoHallazgo;if(r&&r.p){$("imagenCertificado").src=certificado(r);$("certificadoFondo").hidden=false}};
+$("cerrarCertificado").onclick=()=>{$("certificadoFondo").hidden=true};
+
+function certificado(r){
+  const W=1080,H=1350,cv=document.createElement("canvas");cv.width=W;cv.height=H;
+  const x=cv.getContext("2d"),serif='"STIX Two Text", "Times New Roman", serif',sans='-apple-system, "Helvetica Neue", Arial, sans-serif';
+  x.fillStyle="#ffffff";x.fillRect(0,0,W,H);
+  x.strokeStyle="#B3121F";x.lineWidth=6;x.strokeRect(40,40,W-80,H-80);
+  x.strokeStyle="#d9d9d9";x.lineWidth=2;x.strokeRect(60,60,W-120,H-120);
+  x.textAlign="center";x.fillStyle="#B3121F";x.font=`600 150px ${serif}`;x.fillText("π",W/2,250);
+  x.fillStyle="#111";x.font=`600 64px ${serif}`;x.fillText("Certificado",W/2,350);
+  x.fillStyle="#6b6b6b";x.font=`400 34px ${sans}`;x.fillText(modoBuscar==="fecha"||r.texto.includes("/")?"La fecha":"La secuencia",W/2,450);
+  x.fillStyle="#B3121F";x.font=`400 96px ${serif}`;x.fillText(r.texto,W/2,560);
+  x.fillStyle="#6b6b6b";x.font=`400 34px ${sans}`;x.fillText("aparece en los decimales del número π",W/2,630);
+  x.fillStyle="#111";x.font=`600 44px ${sans}`;x.fillText(`Página ${fmt(r.p)} · Fila ${r.f} · Cifra ${r.c}`,W/2,740);
+  x.fillStyle="#6b6b6b";x.font=`400 34px ${sans}`;x.fillText(`Decimal nº ${fmt(r.n)}`,W/2,795);
+  // la fila con la fecha marcada
+  const fila=digitosDePagina(r.p).slice((r.f-1)*POR_FILA,r.f*POR_FILA),paso=44,x0=W/2-paso*POR_FILA/2+paso/2;
+  const i0=r.c-1,i1=i0+r.cifras.length;
+  x.font=`400 44px ${serif}`;
+  [...fila].forEach((ch,j)=>{const cx=x0+j*paso;if(j>=i0&&j<i1){x.fillStyle="#B3121F";x.fillRect(cx-paso/2+2,875,paso-4,60);x.fillStyle="#fff"}else x.fillStyle="#111";x.fillText(ch,cx,920)});
+  const ahora=new Date();
+  x.fillStyle="#6b6b6b";x.font=`400 30px ${sans}`;
+  x.fillText("Comprobado el "+ahora.toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"})+" a las "+ahora.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}),W/2,1080);
+  x.fillStyle="#111";x.font=`600 34px ${sans}`;x.fillText("pinumbers.es",W/2,1220);
+  return cv.toDataURL("image/png");
+}
+aplicarRutinas();
 
 /* ---------- Panel oculto ---------- */
 let toques=[];
@@ -621,6 +909,13 @@ function pintarPanel(){
   pintarOps("ops",ajustes.operaciones);
   document.getElementById("ajReto").checked=!!reto.modo;
   document.getElementById("campoCodigo").value=codigo;
+  marcarSeg("segFormato",ajustes.fecha.formato);
+  ["sumaPagina","multFila","sumaColumna","segundos"].forEach(k=>document.getElementById("aj"+k[0].toUpperCase()+k.slice(1)).textContent=ajustes.fecha[k]);
+  document.getElementById("infoFechas").textContent=fechas.length?"Fechas colocadas: "+fechas.map(x=>x.texto+" → pág. "+x.p).join(", "):"Ninguna fecha colocada.";
+  document.getElementById("borrarFechas").disabled=!fechas.length;
+  document.getElementById("rutBuscador").checked=!!ajustes.rutinas.buscador;
+  document.getElementById("rutReto").checked=!!ajustes.rutinas.reto;
+  document.getElementById("rutNotas").checked=!!ajustes.rutinas.notas;
   marcarSeg("segSegundos",String(ajustes.segundosReto||30));
   marcarSeg("segCifrasReto",String(ajustes.cifrasReto||60));
   document.getElementById("infoGuardadas").textContent=reto.paginas.length
@@ -665,12 +960,19 @@ document.getElementById("presetPares").onclick=()=>{ajustes.reglaPares.operacion
 document.getElementById("ajReto").onchange=e=>{ponerArmado(e.target.checked,"web");cambio()};
 document.querySelectorAll("#segCifrasReto button").forEach(b=>b.onclick=()=>{ajustes.cifrasReto=+b.dataset.v;cambio()});
 document.querySelectorAll("#segSegundos button").forEach(b=>b.onclick=()=>{ajustes.segundosReto=+b.dataset.v;cambio()});
-document.getElementById("borrarGuardadas").onclick=()=>{reto.paginas=[];reto.reales=[];guardarReto();cambio()};
+document.getElementById("borrarGuardadas").onclick=()=>{reto.paginas=[];reto.reales=[];guardarReto();fechas=[];guardarFechas();cambio()};
 document.getElementById("campoCodigo").addEventListener("change",e=>{
   codigo=e.target.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g,"");e.target.value=codigo;
   try{localStorage.setItem(CLAVE_COD,codigo)}catch(err){}
   conectar();
 });
+document.querySelectorAll("#segFormato button").forEach(b=>b.onclick=()=>{ajustes.fecha.formato=b.dataset.v;cambio()});
+const LIMITES_FECHA={sumaPagina:[0,919],multFila:[1,12],sumaColumna:[0,19],segundos:[1,15]};
+document.querySelectorAll("[data-aj]").forEach(b=>b.onclick=()=>{const k=b.dataset.aj,[mn,mx]=LIMITES_FECHA[k];ajustes.fecha[k]=Math.max(mn,Math.min(mx,ajustes.fecha[k]+ +b.dataset.d));cambio()});
+document.getElementById("borrarFechas").onclick=()=>{fechas=[];guardarFechas();cambio()};
+document.getElementById("rutBuscador").onchange=e=>{ajustes.rutinas.buscador=e.target.checked;cambio();aplicarRutinas()};
+document.getElementById("rutReto").onchange=e=>{ajustes.rutinas.reto=e.target.checked;cambio();aplicarRutinas()};
+document.getElementById("rutNotas").onchange=e=>{ajustes.rutinas.notas=e.target.checked;cambio();aplicarRutinas()};
 document.getElementById("restablecer").onclick=()=>{ajustes=JSON.parse(JSON.stringify(AJUSTES_POR_DEFECTO));cambio()};
 document.getElementById("campoPrueba").addEventListener("input",vistaPrevia);
 

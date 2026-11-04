@@ -32,7 +32,56 @@ const AJUSTES_POR_DEFECTO = {
       { op: "+", n: 5 },
     ],
   },
+  // Efecto «tu cumpleaños en π»: dónde aparece la fecha que escribe el espectador
+  fecha: {
+    formato: "dma",          // "dm" | "md" | "dma" | "mda"  (el año siempre con 2 cifras)
+    sumaPagina: 50,          // página = día + 50
+    multFila: 2,             // fila = mes × 2
+    sumaColumna: 2,          // cifra de la fila donde empieza = mes + 2
+    segundos: 4,             // lo que tarda la animación de «buscando»
+  },
+  // Lo que se ve en la web (para encadenar rutinas)
+  rutinas: {
+    buscador: true,
+    reto: true,
+    notas: true,
+  },
 };
+
+const FORMATOS_FECHA = {
+  dm: { orden: ["d", "m"], texto: "DD/MM" },
+  md: { orden: ["m", "d"], texto: "MM/DD" },
+  dma: { orden: ["d", "m", "a"], texto: "DD/MM/AA" },
+  mda: { orden: ["m", "d", "a"], texto: "MM/DD/AA" },
+};
+
+// "14/03/95" → {dia:14, mes:3, anio:95, cifras:"140395"} según el formato; null si no es una fecha
+function leerFecha(texto, formato) {
+  const fm = FORMATOS_FECHA[formato] || FORMATOS_FECHA.dma;
+  const trozos = String(texto).trim().split(/[^0-9]+/).filter(Boolean);
+  let partes;
+  if (trozos.length === fm.orden.length) partes = trozos;
+  else {
+    const s = trozos.join("");
+    if (s.length !== fm.orden.length * 2) return null;
+    partes = fm.orden.map((_, i) => s.slice(i * 2, i * 2 + 2));
+  }
+  const v = {};
+  fm.orden.forEach((k, i) => { v[k] = parseInt(partes[i], 10); });
+  if (!(v.d >= 1 && v.d <= 31 && v.m >= 1 && v.m <= 12)) return null;
+  if (fm.orden.includes("a") && !(v.a >= 0 && v.a <= 99)) return null;
+  const dos = (n) => String(n).padStart(2, "0");
+  return { dia: v.d, mes: v.m, anio: fm.orden.includes("a") ? v.a : null,
+           cifras: fm.orden.map((k) => dos(v[k])).join("") };
+}
+
+// Dónde va la fecha: página = día + sumaPagina, fila = mes × multFila, cifra = mes + sumaColumna
+function posicionFecha(dia, mes, f) {
+  const pag = ((dia + f.sumaPagina - 1) % 1000 + 1000) % 1000 + 1;
+  const fila = ((mes * f.multFila - 1) % 25 + 25) % 25 + 1;
+  const col = ((mes + f.sumaColumna - 1) % 20 + 20) % 20 + 1;
+  return { pagina: pag, fila, columna: col, decimal: (pag - 1) * 500 + (fila - 1) * 20 + col };
+}
 
 function sumaCifras(n) {
   return String(Math.abs(n)).split("").reduce((a, c) => a + Number(c), 0);
@@ -125,5 +174,5 @@ function cifrasReto(pagina, ajustes = {}, cuantas = 60) {
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto };
+  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto, leerFecha, posicionFecha };
 }
