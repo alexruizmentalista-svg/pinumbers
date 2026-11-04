@@ -39,7 +39,8 @@ body{touch-action:manipulation;color:var(--texto);font-family:var(--f-ui);font-s
 .ir{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--gris)}
 .ir input{width:3.6em;height:28px;border:1px solid var(--regla);border-radius:3px;background:var(--fondo);color:var(--texto);
   font:400 15px var(--f-tabla);text-align:center;font-variant-numeric:tabular-nums;padding:0}
-.flecha:focus-visible,.ir input:focus-visible{outline:2px solid var(--enlace);outline-offset:1px}
+.botonIr{appearance:none;border:0;background:var(--enlace);color:var(--fondo);border-radius:3px;height:28px;padding:0 9px;font:600 13px var(--f-ui);cursor:pointer}
+.flecha:focus-visible,.ir input:focus-visible,.botonIr:focus-visible{outline:2px solid var(--enlace);outline-offset:1px}
 
 .subbarra{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding-block:6px;font-size:12px;color:var(--gris);flex:none;
   font-variant-numeric:tabular-nums;border-bottom:1px solid var(--regla)}
@@ -129,7 +130,7 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
     <div class="nombre" id="logo"><span class="simbolo" aria-hidden="true">π</span><b>Pi Numbers</b></div>
     <nav class="nav" aria-label="Páginas">
       <button class="flecha" id="anterior" aria-label="Página anterior">‹</button>
-      <form class="ir" id="formIr"><label for="campoPagina">Pág.</label><input id="campoPagina" inputmode="numeric" pattern="[0-9]*" autocomplete="off" enterkeyhint="go"></form>
+      <form class="ir" id="formIr"><label for="campoPagina">Pág.</label><input id="campoPagina" inputmode="numeric" pattern="[0-9]*" autocomplete="off" enterkeyhint="go"><button class="botonIr" type="submit">Ir</button></form>
       <button class="flecha" id="siguiente" aria-label="Página siguiente">›</button>
     </nav>
   </header>
@@ -496,7 +497,10 @@ function irA(p){p=Math.max(1,Math.min(PAGINAS,p|0||1));if(p!==pagina){if(retoTim
 
 document.getElementById("anterior").onclick=()=>irA(pagina-1);
 document.getElementById("siguiente").onclick=()=>irA(pagina+1);
-document.getElementById("formIr").addEventListener("submit",e=>{e.preventDefault();const v=parseInt(document.getElementById("campoPagina").value,10);if(v)irA(v);document.getElementById("campoPagina").blur()});
+function irDesdeCampo(){const c=document.getElementById("campoPagina");const v=parseInt(c.value,10);c.value="";if(v)irA(v)}
+document.getElementById("formIr").addEventListener("submit",e=>{e.preventDefault();irDesdeCampo();document.getElementById("campoPagina").blur()});
+// El teclado numérico del iPhone no tiene tecla «Ir»: al cerrar el teclado (tocar fuera o «OK») también va a la página
+document.getElementById("campoPagina").addEventListener("blur",()=>{if(document.getElementById("campoPagina").value)irDesdeCampo()});
 window.addEventListener("resize",ajustarTamano);
 document.addEventListener("keydown",e=>{
   if(e.target.tagName==="INPUT"||!document.getElementById("panelFondo").hidden)return;
