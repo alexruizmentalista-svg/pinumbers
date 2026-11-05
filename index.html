@@ -667,8 +667,10 @@ function fijarFilasSiToca(p){
 function digitosDePagina(p){
   let d=digitosBase(p);
   if(reto.paginasFecha.includes(p))d=ponerTodasFechas(p,d);
+  d=ponerFechas(p,d);
+  // los códigos de fila van los últimos: nada los pisa
   if(reto.paginasFilas.includes(p))d=ponerCodigosFila(p,d);
-  return ponerFechas(p,d);
+  return d;
 }
 function digitosBase(p){
   const ini=(p-1)*POR_PAGINA;
@@ -814,7 +816,18 @@ document.getElementById("verPagina").onclick=()=>{document.getElementById("tapa"
   else ultimo=ahora;
 })})();
 
+// Solo un modo armado a la vez: armar uno desarma los otros dos
+function desarmarOtros(menos){
+  const antes={reto:reto.modo,fecha:reto.fecha,filas:reto.filas};
+  if(menos!=="reto")reto.modo=false;
+  if(menos!=="fecha")reto.fecha=false;
+  if(menos!=="filas")reto.filas=false;
+  if(antes.reto&&!reto.modo)enviar({t:"armado",on:false});
+  if(antes.fecha&&!reto.fecha)enviar({t:"modoFecha",on:false});
+  if(antes.filas&&!reto.filas)enviar({t:"modoFilas",on:false});
+}
 function ponerArmado(on,origen){
+  if(on)desarmarOtros("reto");
   reto.modo=!!on;
   // la página que tiene delante ya la ha visto: no cambia al armar
   if(on&&!reto.paginas.includes(pagina)&&!reto.reales.includes(pagina))reto.reales.push(pagina);
@@ -1019,6 +1032,7 @@ aplicarRutinas();
 
 /* ---------- Modo fecha (doble toque a la izquierda) ---------- */
 function ponerModoFecha(on,origen){
+  if(on)desarmarOtros("fecha");
   reto.fecha=!!on;
   // la página que tiene delante ya la ha visto: no cambia al armar
   if(on&&!reto.paginasFecha.includes(pagina)&&!reto.realesFecha.includes(pagina))reto.realesFecha.push(pagina);
@@ -1042,6 +1056,7 @@ function colocarSecuencia(s){
 
 /* ---------- Modo filas (doble toque sobre los números de fila) ---------- */
 function ponerModoFilas(on,origen){
+  if(on)desarmarOtros("filas");
   reto.filas=!!on;
   if(on&&!reto.paginasFilas.includes(pagina)&&!reto.realesFilas.includes(pagina))reto.realesFilas.push(pagina);
   guardarReto();ultimoAviso="";pintar();
