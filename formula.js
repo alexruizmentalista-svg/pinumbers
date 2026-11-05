@@ -40,9 +40,13 @@ const AJUSTES_POR_DEFECTO = {
     sumaColumna: 2,          // cifra de la fila donde empieza = mes + 2
     segundos: 4,             // lo que tarda la animación de «buscando»
   },
-  // Buscador de secuencias: «regla» (siempre aparece) o «real» (busca en los decimales de verdad)
+  // Buscador de secuencias: «regla» (siempre aparece), «real» (busca de verdad) o
+  // «seguir» (no dice dónde: su número va al principio de la próxima página que abra y detrás sigue tu secuencia)
   secuencia: {
     modo: "regla",
+    continuacion: "formula",  // «formula» (desde su última cifra con la secuencia de las impares) | «fija»
+    fija: "",                 // tu bloque memorizado para «fija»
+    cifras: 20,               // cuántas cifras van detrás de su número
     sumaPagina: 100,         // página = dos primeras cifras + 100
     sumaFila: 1,             // fila = tercera cifra + 1
     sumaCifra: 1,            // cifra de la fila donde empieza = cuarta cifra + 1
@@ -180,6 +184,25 @@ function cifrasReto(pagina, ajustes = {}, cuantas = 60) {
   return d;
 }
 
+// Modo seguir: lo que va detrás de su número
+function continuacionSeguir(num, a) {
+  const q = a.secuencia, n = Math.max(1, Math.min(60, q.cifras || 20));
+  if (q.continuacion === "fija" && q.fija) {
+    let s = String(q.fija).replace(/[^0-9]/g, "");
+    if (s.length >= n) return s.slice(0, n);
+    num = num + s;  // si el bloque es corto, se completa con la fórmula desde su última cifra
+    const resto = continuacionFormula(num, n - s.length, a);
+    return s + resto;
+  }
+  return continuacionFormula(num, n, a);
+}
+function continuacionFormula(num, n, a) {
+  const ops = a.operaciones && a.operaciones.length ? a.operaciones : [{ op: "+", n: 0 }];
+  let v = Number(String(num).slice(-1)) || 0, d = "", i = 0;
+  while (d.length < n) { v = aplicar(v, ops[i % ops.length], 10); d += String(v); i++; }
+  return d;
+}
+
 // Buscador con regla: dónde va una secuencia de 4 a 9 cifras
 function posicionSecuencia(s, q) {
   const ab = parseInt(s.slice(0, 2), 10), c = +s[2], d = +s[3];
@@ -215,5 +238,5 @@ function leerCodigoFila(c) {
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto, leerFecha, posicionFecha, posicionSecuencia, codigoFila, leerCodigoFila };
+  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto, leerFecha, posicionFecha, posicionSecuencia, codigoFila, leerCodigoFila, continuacionSeguir };
 }

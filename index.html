@@ -166,7 +166,7 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
   <div class="subbarra lado">
     <span id="zonaFecha" class="zona-toque"><span class="punto punto-izq" id="puntoFecha" hidden></span>Pág. <strong id="numPagina">1</strong> / 1.000<span class="punto" id="punto" hidden></span></span>
     <span class="acciones"><button class="reto" id="botonReto" type="button">Reto <span id="textoReto">30 s</span></button><button class="reto" id="botonBuscar" type="button">Buscar</button></span>
-    <span id="rango" class="rango"><span class="punto punto-izq" id="puntoFilas" hidden></span><span id="rangoTexto">Dec. 1–500</span></span>
+    <span id="rango" class="rango"><span class="punto punto-izq" id="puntoFilas" hidden></span><span id="rangoTexto">25 × 20</span></span>
   </div>
   <div class="progreso-reto" aria-hidden="true"><i id="barraReto"></i></div>
   <div class="zona">
@@ -206,8 +206,8 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
         <dt>Página</dt><dd id="resPagina"></dd>
         <dt>Fila</dt><dd id="resFila"></dd>
         <dt>Cifra</dt><dd id="resCifra"></dd>
-        <dt>Decimal nº</dt><dd id="resDecimal"></dd>
       </dl>
+      <p class="b-estado" id="seguirTexto" hidden>Está en el libro de Pi Numbers. ¿Sabes en qué página?</p>
       <div class="b-botones"><button type="button" class="botonIr" id="verEnTabla">Ver en la tabla</button><button type="button" class="reto" id="verCertificado">Certificado</button></div>
     </div>
   </div>
@@ -230,10 +230,9 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
     <h2>Ficha</h2>
     <dl class="ficha">
       <dt>Constante</dt><dd>π = 3,14159 26535 89793…</dd>
-      <dt>Formato</dt><dd>500 decimales por página · 25 filas de 20</dd>
-      <dt>Total</dt><dd>500.000 decimales · 1.000 páginas</dd>
+      <dt>Formato</dt><dd>25 filas de 20 cifras por página</dd>
+      <dt>Total</dt><dd>1.000 páginas</dd>
       <dt>Verificación</dt><dd>Dos cálculos independientes con distinta precisión</dd>
-      <dt>Secuencia OEIS</dt><dd><a href="https://oeis.org/A000796" target="_blank" rel="noopener">A000796</a></dd>
     </dl>
   </div>
   <div>
@@ -300,7 +299,7 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
     <div class="grupo">
       <span class="titulo">Reto de memoria</span>
       <div class="linea-ajuste"><span>Modo reto armado</span><input type="checkbox" class="interruptor" id="ajReto"></div>
-      <div class="ayuda">También se arma y desarma con doble toque sobre «Dec. …». Con el modo armado, cada página que se abre se queda con la fórmula del reto para siempre en este móvil. El resto de la página es pi real.</div>
+      <div class="ayuda">También se arma y desarma con doble toque sobre «25 × 20» (arriba a la derecha). Con el modo armado, cada página que se abre se queda con la fórmula del reto para siempre en este móvil. El resto de la página es pi real.</div>
       <span class="ayuda">Cifras de fórmula en el reto:</span>
       <div class="segmento" id="segCifrasReto"><button data-v="30">30 · una secuencia</button><button data-v="60">60 · cambia en la 30</button></div>
       <span class="ayuda">Duración del cronómetro:</span>
@@ -341,8 +340,8 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
 
     <div class="grupo">
       <span class="titulo">Buscador de secuencias</span>
-      <div class="segmento" id="segModoSec"><button data-v="regla">Con regla (siempre sale)</button><button data-v="real">Búsqueda real</button></div>
-      <div class="ayuda">Regla: página = 2 primeras cifras + 100, fila = 3ª + 1, cifra = 4ª + 1. Se cambia en la app.</div>
+      <div class="segmento" id="segModoSec"><button data-v="regla">Con regla</button><button data-v="real">Real</button><button data-v="seguir">Seguir</button></div>
+      <div class="ayuda">Con regla: página = 2 primeras cifras + 100, fila = 3ª + 1, cifra = 4ª + 1. Seguir: no dice dónde; su número va al principio de la próxima página que abra y detrás sigue tu fórmula (o tu bloque, desde la app).</div>
     </div>
 
     <div class="grupo">
@@ -406,9 +405,13 @@ const AJUSTES_POR_DEFECTO = {
     sumaColumna: 2,          // cifra de la fila donde empieza = mes + 2
     segundos: 4,             // lo que tarda la animación de «buscando»
   },
-  // Buscador de secuencias: «regla» (siempre aparece) o «real» (busca en los decimales de verdad)
+  // Buscador de secuencias: «regla» (siempre aparece), «real» (busca de verdad) o
+  // «seguir» (no dice dónde: su número va al principio de la próxima página que abra y detrás sigue tu secuencia)
   secuencia: {
     modo: "regla",
+    continuacion: "formula",  // «formula» (desde su última cifra con la secuencia de las impares) | «fija»
+    fija: "",                 // tu bloque memorizado para «fija»
+    cifras: 20,               // cuántas cifras van detrás de su número
     sumaPagina: 100,         // página = dos primeras cifras + 100
     sumaFila: 1,             // fila = tercera cifra + 1
     sumaCifra: 1,            // cifra de la fila donde empieza = cuarta cifra + 1
@@ -546,6 +549,25 @@ function cifrasReto(pagina, ajustes = {}, cuantas = 60) {
   return d;
 }
 
+// Modo seguir: lo que va detrás de su número
+function continuacionSeguir(num, a) {
+  const q = a.secuencia, n = Math.max(1, Math.min(60, q.cifras || 20));
+  if (q.continuacion === "fija" && q.fija) {
+    let s = String(q.fija).replace(/[^0-9]/g, "");
+    if (s.length >= n) return s.slice(0, n);
+    num = num + s;  // si el bloque es corto, se completa con la fórmula desde su última cifra
+    const resto = continuacionFormula(num, n - s.length, a);
+    return s + resto;
+  }
+  return continuacionFormula(num, n, a);
+}
+function continuacionFormula(num, n, a) {
+  const ops = a.operaciones && a.operaciones.length ? a.operaciones : [{ op: "+", n: 0 }];
+  let v = Number(String(num).slice(-1)) || 0, d = "", i = 0;
+  while (d.length < n) { v = aplicar(v, ops[i % ops.length], 10); d += String(v); i++; }
+  return d;
+}
+
 // Buscador con regla: dónde va una secuencia de 4 a 9 cifras
 function posicionSecuencia(s, q) {
   const ab = parseInt(s.slice(0, 2), 10), c = +s[2], d = +s[3];
@@ -581,7 +603,7 @@ function leerCodigoFila(c) {
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto, leerFecha, posicionFecha, posicionSecuencia, codigoFila, leerCodigoFila };
+  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto, leerFecha, posicionFecha, posicionSecuencia, codigoFila, leerCodigoFila, continuacionSeguir };
 }
 
 
@@ -694,10 +716,11 @@ function ajustarTamano(){
 }
 
 function pintar(){
+  colocarSeguirSiToca(pagina);
   fijarSiToca(pagina);fijarFechaSiToca(pagina);fijarFilasSiToca(pagina);
   const {d,filas}=filasDePagina(pagina);
   document.getElementById("numPagina").textContent=fmt(pagina);
-  document.getElementById("rangoTexto").textContent=`Dec. ${fmt((pagina-1)*POR_PAGINA+1)}–${fmt(pagina*POR_PAGINA)}`;
+
   const t=document.getElementById("tabla");t.innerHTML="";
   filas.forEach((s,f)=>{
     const fila=document.createElement("div");fila.className="fila";
@@ -825,6 +848,8 @@ function deApp(m){
   }else if(m.t==="fecha"&&m.q){
     const r=colocarFecha(m.q,m.formato);
     enviar(r?{t:"fechaColocada",q:r.texto,p:r.p,f:r.f,c:r.c,n:r.n}:{t:"fechaColocada",q:m.q,error:true});
+  }else if(m.t==="seguir"&&m.q){
+    prepararSeguir(String(m.q).replace(/[^0-9]/g,""),"app");
   }else if(m.t==="modoFilas"){
     if(!!m.on!==reto.filas)ponerModoFilas(m.on,"app");
   }else if(m.t==="modoFecha"){
@@ -918,7 +943,11 @@ $("formBuscar").addEventListener("submit",e=>{
   }else{
     const s=q.replace(/[^0-9]/g,"");
     if(s.length<3||s.length>9){$("errorBuscar").textContent="Escribe entre 3 y 9 cifras.";$("errorBuscar").hidden=false;return}
-    if(ajustes.secuencia.modo==="regla"){
+    if(ajustes.secuencia.modo==="seguir"){
+      if(s.length<2){$("errorBuscar").textContent="Escribe al menos 2 cifras.";$("errorBuscar").hidden=false;return}
+      prepararSeguir(s,"web");
+      r={p:0,seguir:true,texto:s,cifras:s};
+    }else if(ajustes.secuencia.modo==="regla"){
       if(s.length<4){$("errorBuscar").textContent="Escribe al menos 4 cifras.";$("errorBuscar").hidden=false;return}
       r=colocarSecuencia(s);
     }else{
@@ -929,12 +958,12 @@ $("formBuscar").addEventListener("submit",e=>{
   $("campoBuscar").blur();
   ultimoHallazgo=r;
   // Te llega ya, mientras la web «busca»
-  enviar({t:"busca",modo:modoBuscar,q:r.texto,p:r.p,f:r.f,c:r.c,n:r.n,ok:r.p>0});
+  if(!r.seguir)enviar({t:"busca",modo:modoBuscar,q:r.texto,p:r.p,f:r.f,c:r.c,n:r.n,ok:r.p>0});
   animarBusqueda(r);
 });
 function animarBusqueda(r){
   $("formBuscar").hidden=true;$("resultadoBuscar").hidden=true;$("progresoBuscar").hidden=false;
-  const total=(ajustes.fecha.segundos||4)*1000,t0=Date.now(),meta=r.p>0?r.n:500000;
+  const total=(ajustes.fecha.segundos||4)*1000,t0=Date.now(),meta=r.p>0?r.n:(r.seguir?317000+Math.floor(Math.random()*150000):500000);
   cancelarBusqueda();
   buscando=setInterval(()=>{
     const k=Math.min(1,(Date.now()-t0)/total);
@@ -946,11 +975,13 @@ function animarBusqueda(r){
 }
 function mostrarResultado(r){
   $("progresoBuscar").hidden=true;$("resultadoBuscar").hidden=false;
-  const ok=r.p>0;
-  $("estadoResultado").textContent=ok?"Encontrada":"No aparece en los primeros 500.000 decimales";
+  const ok=r.p>0||!!r.seguir;
+  $("estadoResultado").textContent=ok?"Encontrada":"No aparece en el libro";
+  $("seguirTexto").hidden=!r.seguir;
+  document.querySelector(".b-ficha").hidden=!!r.seguir;
   $("buscadaResultado").textContent=r.texto;
-  [["resPagina",r.p],["resFila",r.f],["resCifra",r.c],["resDecimal",r.n]].forEach(([id,v])=>$(id).textContent=ok?fmt(v):"—");
-  $("verEnTabla").hidden=!ok;$("verCertificado").hidden=!ok;
+  [["resPagina",r.p],["resFila",r.f],["resCifra",r.c]].forEach(([id,v])=>$(id).textContent=r.p>0?fmt(v):"—");
+  $("verEnTabla").hidden=!ok||!!r.seguir;$("verCertificado").hidden=!ok||!!r.seguir;
 }
 $("verEnTabla").onclick=()=>{
   const r=ultimoHallazgo;if(!r||!r.p)return;
@@ -973,7 +1004,6 @@ function certificado(r){
   x.fillStyle="#B3121F";x.font=`400 96px ${serif}`;x.fillText(r.texto,W/2,560);
   x.fillStyle="#6b6b6b";x.font=`400 34px ${sans}`;x.fillText("aparece en los decimales del número π",W/2,630);
   x.fillStyle="#111";x.font=`600 44px ${sans}`;x.fillText(`Página ${fmt(r.p)} · Fila ${r.f} · Cifra ${r.c}`,W/2,740);
-  x.fillStyle="#6b6b6b";x.font=`400 34px ${sans}`;x.fillText(`Decimal nº ${fmt(r.n)}`,W/2,795);
   // la fila con la fecha marcada
   const fila=digitosDePagina(r.p).slice((r.f-1)*POR_FILA,r.f*POR_FILA),paso=44,x0=W/2-paso*POR_FILA/2+paso/2;
   const i0=r.c-1,i1=i0+r.cifras.length;
@@ -1021,6 +1051,31 @@ let ultimoToqueFila=0;
 function toqueNumeroFila(){
   const ahora=Date.now();
   if(ahora-ultimoToqueFila<400){ultimoToqueFila=0;ponerModoFilas(!reto.filas,"web")}else ultimoToqueFila=ahora;
+}
+
+/* ---------- Modo seguir: su número va al principio de la próxima página que abra ---------- */
+const CLAVE_SEGUIR="pinumbers.seguir.v1";
+let seguir=(()=>{try{return JSON.parse(localStorage.getItem(CLAVE_SEGUIR)||"null")}catch(e){return null}})();
+function guardarSeguir(){try{if(seguir)localStorage.setItem(CLAVE_SEGUIR,JSON.stringify(seguir));else localStorage.removeItem(CLAVE_SEGUIR)}catch(e){}}
+function prepararSeguir(num,origen){
+  if(!num)return;
+  seguir={num,cont:continuacionSeguir(num,ajustes),desde:pagina};
+  guardarSeguir();
+  enviar({t:"seguirPendiente",q:num,cont:seguir.cont,origen});
+}
+function colocarSeguirSiToca(p){
+  if(!seguir||p===seguir.desde||(p===1&&ajustes.pagina1Real))return;
+  const cifras=(seguir.num+seguir.cont).slice(0,POR_PAGINA);
+  const rec={p,f:1,c:1,cifras,texto:seguir.num,n:(p-1)*POR_PAGINA+1};
+  fechas=fechas.filter(x=>x.p!==p||x.f!==1||x.c!==1);
+  fechas.push(rec);guardarFechas();
+  // la página se queda fuera de los demás modos
+  if(!reto.realesFilas.includes(p))reto.realesFilas.push(p);
+  if(!reto.realesFecha.includes(p))reto.realesFecha.push(p);
+  if(!reto.reales.includes(p))reto.reales.push(p);
+  guardarReto();
+  enviar({t:"seguirColocado",q:seguir.num,cont:seguir.cont,p});
+  seguir=null;guardarSeguir();
 }
 
 /* ---------- Panel oculto ---------- */
