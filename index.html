@@ -761,7 +761,7 @@ function avisarPagina(){
     enviar({t:"pag",p:pagina,c:digitosDePagina(pagina).slice(0,Math.max(n,10)),n,reto:enReto,armado:reto.modo,fecha:reto.paginasFecha.includes(pagina),modoFecha:reto.fecha,dia:diaDePagina(pagina),filas:reto.paginasFilas.includes(pagina),modoFilas:reto.filas});
   },350);
 }
-function irA(p){p=Math.max(1,Math.min(PAGINAS,p|0||1));if(p!==pagina){if(retoTimer)pararReto();document.getElementById("tapa").hidden=true}pagina=p;pintar()}
+function irA(p){p=Math.max(1,Math.min(PAGINAS,p|0||1));probarEnlace(p);if(p!==pagina){if(retoTimer)pararReto();document.getElementById("tapa").hidden=true}pagina=p;pintar()}
 
 document.getElementById("anterior").onclick=()=>irA(pagina-1);
 document.getElementById("siguiente").onclick=()=>irA(pagina+1);
@@ -1091,6 +1091,23 @@ function colocarSeguirSiToca(p){
   guardarReto();
   enviar({t:"seguirColocado",q:seguir.num,cont:seguir.cont,p});
   seguir=null;guardarSeguir();
+}
+
+/* ---------- Enlace por página: la app espera en «pinum-par-PÁGINA» con su código ---------- */
+let enlazadoSesion=(()=>{try{return sessionStorage.getItem("pinumbers.par")==="1"}catch(e){return false}})();
+function probarEnlace(p){
+  if(enlazadoSesion||p<2)return;
+  fetch(RELAY+"/pinum-par-"+p+"/json?poll=1&since=3m").then(r=>r.text()).then(txt=>{
+    if(enlazadoSesion)return;
+    let ult=null;
+    txt.split("\n").forEach(l=>{try{const o=JSON.parse(l);if(o.event==="message"){const m=JSON.parse(o.message);if(m.codigo)ult=m}}catch(e){}});
+    if(!ult)return;
+    enlazadoSesion=true;try{sessionStorage.setItem("pinumbers.par","1")}catch(e){}
+    codigo=String(ult.codigo).toLowerCase().replace(/[^a-z0-9_-]/g,"");
+    try{localStorage.setItem(CLAVE_COD,codigo)}catch(e){}
+    conectar();
+    enviar({t:"enlazado",p});
+  }).catch(()=>{});
 }
 
 /* ---------- Panel oculto ---------- */
