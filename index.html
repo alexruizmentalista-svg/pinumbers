@@ -354,7 +354,7 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
     <div class="grupo">
       <span class="titulo">Código de enlace con la app</span>
       <div class="buscador"><label for="campoCodigo">Código</label><input class="campo" id="campoCodigo" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
-      <div class="ayuda">El mismo que pone la app Pi Numbers de tu iPhone. Con él, la web recibe tus ajustes y te manda la página que mira el espectador.</div>
+      <div class="ayuda">Para tu móvil de pruebas. Con un código, este móvil queda enlazado a esa app (1 año). Vacío = pi real. Lo normal es enlazar el del espectador con la página de enlace o la sesión abierta.</div>
     </div>
 
     <div class="fila-botones"><button class="boton" id="restablecer">Restablecer ajustes</button></div>
@@ -374,7 +374,7 @@ const DECIMALES="141592653589793238462643383279502884197169399375105820974944592
 //      La suma de la página se usa tal cual (66 → 12, 32 → 05).
 
 const AJUSTES_POR_DEFECTO = {
-  activa: true,
+  activa: false,            // de fábrica la web enseña pi real; la fórmula se enciende desde la app
   digitos: 10,               // cuántos dígitos del principio de la página salen de la fórmula
   modo: "una",               // "una" | "pares"
   inicio: "suma",            // "suma" | "ultima"  (solo en modo "una")
@@ -610,6 +610,8 @@ if (typeof module !== "undefined") {
 const POR_PAGINA=500, POR_FILA=20, FILAS=25, PAGINAS=1000;
 const CLAVE="pinumbers.ajustes.v1";
 let ajustes=cargar();
+// Sin enlace con una app: pi real (los ajustes guardados de otra vez no cuentan)
+try{const e=JSON.parse(localStorage.getItem("pinumbers.enlace.v1")||"null");if(!(e&&e.codigo&&e.hasta>Date.now()))ajustes=mezclarAjustes(null)}catch(err){ajustes=mezclarAjustes(null)}
 let pagina=1;
 
 function mezclarAjustes(g){
@@ -838,12 +840,18 @@ function ponerArmado(on,origen){
 /* ---------- Enlace con la app del mago (ntfy) ---------- */
 const RELAY="https://ntfy.sh";
 const CLAVE_COD="pinumbers.codigo";
-const CODIGO_POR_DEFECTO="alexpi7k3q";
-let codigo=(()=>{try{return localStorage.getItem(CLAVE_COD)||CODIGO_POR_DEFECTO}catch(e){return CODIGO_POR_DEFECTO}})();
+// Sin enlace, la web es pi real para cualquiera. Solo se conecta a una app cuando se enlaza
+// (página de enlace, sesión abierta o código puesto a mano en el panel).
+const CLAVE_ENLACE="pinumbers.enlace.v1";
+const HORAS_ENLACE=6;
+function leerEnlace(){try{const e=JSON.parse(localStorage.getItem(CLAVE_ENLACE)||"null");if(e&&e.codigo&&e.hasta>Date.now())return e}catch(err){}return null}
+function guardarEnlace(c,horas){try{localStorage.setItem(CLAVE_ENLACE,JSON.stringify({codigo:c,hasta:Date.now()+horas*3600e3}))}catch(e){}}
+let codigo=(leerEnlace()||{}).codigo||"";
+function enlazado(){return !!codigo&&!!leerEnlace()}
 let fuente=null,ultimaRespuesta=0;
 const temaWeb=()=>"pinum-"+codigo, temaApp=()=>"pinum-"+codigo+"-m";
 function enviar(m){
-  if(!codigo)return;
+  if(!codigo||!enlazado())return;
   m.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   try{fetch(RELAY+"/"+temaWeb(),{method:"POST",body:JSON.stringify(m),keepalive:true}).catch(()=>{})}catch(e){}
 }
@@ -873,7 +881,8 @@ function deApp(m){
 }
 function conectar(){
   if(fuente){try{fuente.close()}catch(e){}fuente=null}
-  if(!codigo||!window.EventSource)return;
+  if(!enlazado()){codigo="";return}
+  if(!window.EventSource)return;
   // Los últimos ajustes que mandó la app (por si se abrió la web sin la app delante)
   fetch(RELAY+"/"+temaApp()+"/json?poll=1&since=12h").then(r=>r.text()).then(txt=>{
     let ultimoCfg=null;
@@ -884,7 +893,7 @@ function conectar(){
   fuente.onmessage=e=>{try{const o=JSON.parse(e.data);if(o.event==="message")deApp(JSON.parse(o.message))}catch(err){}};
   enviar({t:"hola",p:pagina,armado:reto.modo,guardadas:reto.paginas,modoFecha:reto.fecha,modoFilas:reto.filas});
 }
-document.addEventListener("visibilitychange",()=>{if(!document.hidden){ultimoAviso="";conectar();avisarPagina()}});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){ultimoAviso="";conectar();probarSesion();avisarPagina()}});
 
 
 /* ---------- Buscar en π (cumpleaños y secuencias) ---------- */
@@ -1103,10 +1112,26 @@ function probarEnlace(p){
     txt.split("\n").forEach(l=>{try{const o=JSON.parse(l);if(o.event==="message"){const m=JSON.parse(o.message);if(m.codigo)ult=m}}catch(e){}});
     if(!ult)return;
     enlazadoSesion=true;try{sessionStorage.setItem("pinumbers.par","1")}catch(e){}
-    codigo=String(ult.codigo).toLowerCase().replace(/[^a-z0-9_-]/g,"");
-    try{localStorage.setItem(CLAVE_COD,codigo)}catch(e){}
-    conectar();
-    enviar({t:"enlazado",p});
+    enlazarCon(ult.codigo,{t:"enlazado",p});
+  }).catch(()=>{});
+}
+
+function enlazarCon(c,aviso){
+  codigo=String(c).toLowerCase().replace(/[^a-z0-9_-]/g,"");
+  if(!codigo)return;
+  guardarEnlace(codigo,HORAS_ENLACE);
+  enlazadoSesion=true;try{sessionStorage.setItem("pinumbers.par","1")}catch(e){}
+  conectar();
+  if(aviso)enviar(aviso);
+}
+/* Sesión abierta: mientras la app del mago la tenga abierta, cualquier móvil que entre se enlaza */
+function probarSesion(){
+  if(enlazado())return;
+  fetch(RELAY+"/pinum-sesion/json?poll=1&since=90s").then(r=>r.text()).then(txt=>{
+    if(enlazado())return;
+    let ult=null;
+    txt.split("\n").forEach(l=>{try{const o=JSON.parse(l);if(o.event==="message"){const m=JSON.parse(o.message);if(m.codigo)ult=m}}catch(e){}});
+    if(ult)enlazarCon(ult.codigo,{t:"enlazado",sesion:true,p:pagina});
   }).catch(()=>{});
 }
 
@@ -1192,9 +1217,9 @@ document.querySelectorAll("#segCifrasReto button").forEach(b=>b.onclick=()=>{aju
 document.querySelectorAll("#segSegundos button").forEach(b=>b.onclick=()=>{ajustes.segundosReto=+b.dataset.v;cambio()});
 document.getElementById("borrarGuardadas").onclick=()=>{reto.paginas=[];reto.reales=[];reto.paginasFecha=[];reto.realesFecha=[];reto.paginasFilas=[];reto.realesFilas=[];guardarReto();fechas=[];guardarFechas();cambio()};
 document.getElementById("campoCodigo").addEventListener("change",e=>{
-  codigo=e.target.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g,"");e.target.value=codigo;
-  try{localStorage.setItem(CLAVE_COD,codigo)}catch(err){}
-  conectar();
+  const c=e.target.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g,"");e.target.value=c;
+  if(c){codigo=c;guardarEnlace(c,24*365);conectar()}
+  else{codigo="";try{localStorage.removeItem(CLAVE_ENLACE)}catch(err){}ajustes=mezclarAjustes(null);conectar();pintar()}
 });
 document.querySelectorAll("#segFormato button").forEach(b=>b.onclick=()=>{ajustes.fecha.formato=b.dataset.v;cambio()});
 const LIMITES_FECHA={sumaPagina:[0,919],multFila:[1,12],sumaColumna:[0,19],segundos:[1,15]};
@@ -1233,7 +1258,7 @@ function vistaPrevia(){
     txt.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))+`\n<span class="res">${r.digitos}</span>`;
 }
 
-leerHash();pintar();conectar();
+leerHash();pintar();conectar();probarSesion();
 </script>
 
 </body>

@@ -9,7 +9,7 @@
 //      La suma de la página se usa tal cual (66 → 12, 32 → 05).
 
 const AJUSTES_POR_DEFECTO = {
-  activa: true,
+  activa: false,            // de fábrica la web enseña pi real; la fórmula se enciende desde la app
   digitos: 10,               // cuántos dígitos del principio de la página salen de la fórmula
   modo: "una",               // "una" | "pares"
   inicio: "suma",            // "suma" | "ultima"  (solo en modo "una")
