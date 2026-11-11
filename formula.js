@@ -35,6 +35,7 @@ const AJUSTES_POR_DEFECTO = {
   // Efecto «tu cumpleaños en π»: dónde aparece la fecha que escribe el espectador
   fecha: {
     formato: "dma",          // "dm" | "md" | "dma" | "mda"  (el año siempre con 2 cifras)
+    ambos: true,             // europea y americana a la vez: DDMM en la fila mes×2 y MMDD en la siguiente
     sumaPagina: 50,          // página = día + 50
     multFila: 2,             // fila = mes × 2
     sumaColumna: 2,          // cifra de la fila donde empieza = mes + 2
@@ -51,6 +52,8 @@ const AJUSTES_POR_DEFECTO = {
     sumaFila: 1,             // fila = tercera cifra + 1
     sumaCifra: 1,            // cifra de la fila donde empieza = cuarta cifra + 1
   },
+  // Idioma de la web del espectador: «auto» (el de su móvil), «es» o «en»
+  idioma: "auto",
   // Lo que se ve en la web (para encadenar rutinas)
   rutinas: {
     buscador: false,
@@ -92,6 +95,26 @@ function posicionFecha(dia, mes, f) {
   const fila = ((mes * f.multFila - 1) % 25 + 25) % 25 + 1;
   const col = ((mes + f.sumaColumna - 1) % 20 + 20) % 20 + 1;
   return { pagina: pag, fila, columna: col, decimal: (pag - 1) * 500 + (fila - 1) * 20 + col };
+}
+
+// ¿Escribe la fecha al estilo americano (mes primero)?
+function esAmericana(formato) { return String(formato || "").startsWith("m"); }
+// Con «ambos», el buscador lee la fecha como la escribe el país del móvil (EE. UU.: mes primero)
+function formatoDelMovil(f, idioma) {
+  if (!f.ambos) return f.formato;
+  const lg = String(idioma || "").toLowerCase();
+  const usa = /^en-(us|ph|fm|mh|pw|as|gu|mp|pr|vi|um)/.test(lg) || lg === "en";
+  const conAnio = String(f.formato || "dma").endsWith("a");
+  return (usa ? "md" : "dm") + (conAnio ? "a" : "");
+}
+// Posición con las dos fechas: la americana va una fila más abajo
+function posicionFechaFormato(dia, mes, f, formato) {
+  const pos = posicionFecha(dia, mes, f);
+  if (f.ambos && esAmericana(formato)) {
+    pos.fila = pos.fila % 25 + 1;
+    pos.decimal = (pos.pagina - 1) * 500 + (pos.fila - 1) * 20 + pos.columna;
+  }
+  return pos;
 }
 
 function sumaCifras(n) {
@@ -238,5 +261,5 @@ function leerCodigoFila(c) {
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto, leerFecha, posicionFecha, posicionSecuencia, codigoFila, leerCodigoFila, continuacionSeguir };
+  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto, leerFecha, posicionFecha, esAmericana, formatoDelMovil, posicionFechaFormato, posicionSecuencia, codigoFila, leerCodigoFila, continuacionSeguir };
 }

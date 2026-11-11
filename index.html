@@ -157,24 +157,24 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
 <div class="pantalla">
   <header class="barra lado">
     <div class="nombre" id="logo"><span class="simbolo" aria-hidden="true">π</span><b>Pi Numbers</b></div>
-    <nav class="nav" aria-label="Páginas">
-      <button class="flecha" id="anterior" aria-label="Página anterior">‹</button>
-      <form class="ir" id="formIr"><label for="campoPagina">Pág.</label><input id="campoPagina" inputmode="numeric" pattern="[0-9]*" autocomplete="off" enterkeyhint="go"><button class="botonIr" type="submit">Ir</button></form>
-      <button class="flecha" id="siguiente" aria-label="Página siguiente">›</button>
+    <nav class="nav" aria-label="Páginas" data-ta="paginas">
+      <button class="flecha" id="anterior" aria-label="Página anterior" data-ta="anterior">‹</button>
+      <form class="ir" id="formIr"><label for="campoPagina" data-t="pag">Pág.</label><input id="campoPagina" inputmode="numeric" pattern="[0-9]*" autocomplete="off" enterkeyhint="go"><button class="botonIr" type="submit" data-t="ir">Ir</button></form>
+      <button class="flecha" id="siguiente" aria-label="Página siguiente" data-ta="siguiente">›</button>
     </nav>
   </header>
   <div class="subbarra lado">
-    <span id="zonaFecha" class="zona-toque"><span class="punto punto-izq" id="puntoFecha" hidden></span>Pág. <strong id="numPagina">1</strong> / 1.000<span class="punto" id="punto" hidden></span></span>
-    <span class="acciones"><button class="reto" id="botonReto" type="button">Reto <span id="textoReto">30 s</span></button><button class="reto" id="botonBuscar" type="button">Buscar</button></span>
+    <span id="zonaFecha" class="zona-toque"><span class="punto punto-izq" id="puntoFecha" hidden></span><span data-t="pag">Pág.</span> <strong id="numPagina">1</strong> / <span data-t="mil">1.000</span><span class="punto" id="punto" hidden></span></span>
+    <span class="acciones"><button class="reto" id="botonReto" type="button"><span data-t="reto">Reto</span> <span id="textoReto">30 s</span></button><button class="reto" id="botonBuscar" type="button" data-t="buscar">Buscar</button></span>
     <span id="rango" class="rango"><span class="punto punto-izq" id="puntoFilas" hidden></span><span id="rangoTexto">25 × 20</span></span>
   </div>
   <div class="progreso-reto" aria-hidden="true"><i id="barraReto"></i></div>
   <div class="zona">
     <main class="tabla lado" id="tabla" aria-live="polite"></main>
     <div class="tapa lado" id="tapa" hidden>
-      <p class="tapa-titulo">Tiempo</p>
-      <p class="tapa-texto">Escribid en un papel, en orden, todas las cifras que recordéis desde el principio de la página.</p>
-      <button class="tapa-boton" id="verPagina" type="button">Comprobar con la página</button>
+      <p class="tapa-titulo" data-t="tiempo">Tiempo</p>
+      <p class="tapa-texto" data-t="tapaTexto">Escribid en un papel, en orden, todas las cifras que recordéis desde el principio de la página.</p>
+      <button class="tapa-boton" id="verPagina" type="button" data-t="comprobar">Comprobar con la página</button>
     </div>
   </div>
 </div>
@@ -182,20 +182,20 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
 <div class="buscador-fondo" id="buscadorFondo" hidden>
   <div class="buscador-hoja lado" role="dialog" aria-modal="true" aria-labelledby="tituloBuscar">
     <div class="b-cab">
-      <h2 id="tituloBuscar">Buscar en π</h2>
-      <button class="b-cerrar" id="cerrarBuscar" type="button" aria-label="Cerrar">Cerrar</button>
+      <h2 id="tituloBuscar" data-t="buscarPi">Buscar en π</h2>
+      <button class="b-cerrar" id="cerrarBuscar" type="button" aria-label="Cerrar" data-t="cerrar" data-ta="cerrar">Cerrar</button>
     </div>
     <div class="b-pestanas" role="tablist">
-      <button type="button" role="tab" data-modo="fecha" id="tabFecha">Fecha de nacimiento</button>
-      <button type="button" role="tab" data-modo="secuencia" id="tabSecuencia">Cualquier secuencia</button>
+      <button type="button" role="tab" data-modo="fecha" id="tabFecha" data-t="tabFecha">Fecha de nacimiento</button>
+      <button type="button" role="tab" data-modo="secuencia" id="tabSecuencia" data-t="tabSecuencia">Cualquier secuencia</button>
     </div>
     <form id="formBuscar" class="b-form">
       <label for="campoBuscar" id="etiquetaBuscar">Escribe tu fecha (DD/MM/AA)</label>
-      <div class="b-fila"><input id="campoBuscar" inputmode="numeric" autocomplete="off" enterkeyhint="search"><button type="submit" class="botonIr">Buscar</button></div>
+      <div class="b-fila"><input id="campoBuscar" inputmode="numeric" autocomplete="off" enterkeyhint="search"><button type="submit" class="botonIr" data-t="buscar">Buscar</button></div>
       <p class="b-error" id="errorBuscar" hidden></p>
     </form>
     <div class="b-progreso" id="progresoBuscar" hidden>
-      <p class="b-estado">Buscando en 500.000 decimales…</p>
+      <p class="b-estado" data-t="buscando">Buscando en 500.000 decimales…</p>
       <p class="b-contador" id="contadorBuscar">0</p>
       <div class="b-barra"><i id="barraBuscar"></i></div>
     </div>
@@ -203,43 +203,43 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
       <p class="b-estado" id="estadoResultado">Encontrada</p>
       <p class="b-buscada" id="buscadaResultado"></p>
       <dl class="ficha b-ficha">
-        <dt>Página</dt><dd id="resPagina"></dd>
-        <dt>Fila</dt><dd id="resFila"></dd>
-        <dt>Cifra</dt><dd id="resCifra"></dd>
+        <dt data-t="pagina">Página</dt><dd id="resPagina"></dd>
+        <dt data-t="fila">Fila</dt><dd id="resFila"></dd>
+        <dt data-t="cifra">Cifra</dt><dd id="resCifra"></dd>
       </dl>
-      <p class="b-estado" id="seguirTexto" hidden>Está en el libro de Pi Numbers. ¿Sabes en qué página?</p>
-      <div class="b-botones"><button type="button" class="botonIr" id="verEnTabla">Ver en la tabla</button><button type="button" class="reto" id="verCertificado">Certificado</button></div>
+      <p class="b-estado" id="seguirTexto" hidden data-t="seguirTexto">Está en el libro de Pi Numbers. ¿Sabes en qué página?</p>
+      <div class="b-botones"><button type="button" class="botonIr" id="verEnTabla" data-t="verTabla">Ver en la tabla</button><button type="button" class="reto" id="verCertificado" data-t="certificado">Certificado</button></div>
     </div>
   </div>
 </div>
 
 <div class="buscador-fondo" id="certificadoFondo" hidden>
   <div class="buscador-hoja lado cert-hoja" role="dialog" aria-modal="true" aria-label="Certificado">
-    <div class="b-cab"><h2>Certificado</h2><button class="b-cerrar" id="cerrarCertificado" type="button">Cerrar</button></div>
+    <div class="b-cab"><h2 data-t="certificado">Certificado</h2><button class="b-cerrar" id="cerrarCertificado" type="button" data-t="cerrar">Cerrar</button></div>
     <img id="imagenCertificado" alt="Certificado de la posición en π">
-    <p class="pie">Mantén pulsada la imagen para guardarla en Fotos.</p>
+    <p class="pie" data-t="guardarFoto">Mantén pulsada la imagen para guardarla en Fotos.</p>
   </div>
 </div>
 
 <section class="notas lado" id="seccionNotas">
   <div>
-    <h2>Frecuencia de cifras en esta página</h2>
+    <h2 data-t="frecuencia">Frecuencia de cifras en esta página</h2>
     <div class="tabla-wrap"><table class="frecuencias" id="frecuencias"></table></div>
   </div>
   <div>
-    <h2>Ficha</h2>
+    <h2 data-t="ficha">Ficha</h2>
     <dl class="ficha">
-      <dt>Constante</dt><dd>π = 3,14159 26535 89793…</dd>
-      <dt>Formato</dt><dd>25 filas de 20 cifras por página</dd>
-      <dt>Total</dt><dd>1.000 páginas</dd>
-      <dt>Verificación</dt><dd>Dos cálculos independientes con distinta precisión</dd>
+      <dt data-t="constante">Constante</dt><dd data-t="constanteV">π = 3,14159 26535 89793…</dd>
+      <dt data-t="formato">Formato</dt><dd data-t="formatoV">25 filas de 20 cifras por página</dd>
+      <dt data-t="total">Total</dt><dd data-t="totalV">1.000 páginas</dd>
+      <dt data-t="verificacion">Verificación</dt><dd data-t="verificacionV">Dos cálculos independientes con distinta precisión</dd>
     </dl>
   </div>
   <div>
-    <h2>Nota</h2>
+    <h2 data-t="nota">Nota</h2>
     <p id="curiosidad"></p>
   </div>
-  <p class="pie">Pi Numbers · Tablas de estudio de los decimales de π. Desliza a izquierda o derecha para pasar de página.</p>
+  <p class="pie" data-t="pieWeb">Pi Numbers · Tablas de estudio de los decimales de π. Desliza a izquierda o derecha para pasar de página.</p>
 </section>
 <div class="panel-fondo" id="panelFondo" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="panelTitulo">
@@ -322,6 +322,8 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
       <span class="titulo">Tu cumpleaños en π</span>
       <span class="ayuda">Cómo escribe la fecha:</span>
       <div class="segmento" id="segFormato"><button data-v="dm">DD/MM</button><button data-v="md">MM/DD</button><button data-v="dma">DD/MM/AA</button><button data-v="mda">MM/DD/AA</button></div>
+      <div class="linea-ajuste"><span>Europea y americana a la vez</span><input type="checkbox" class="interruptor" id="ajAmbos"></div>
+      <div class="ayuda">Encendido: la fecha europea (14 03) va en la fila mes × 2 y la americana (03 14) justo en la fila de debajo. El buscador lee la fecha como se escribe en el país de su móvil.</div>
       <div class="linea-ajuste"><span>Página = día +</span><div class="contador"><button class="boton" data-aj="sumaPagina" data-d="-1" aria-label="Menos">−</button><output id="ajSumaPagina">50</output><button class="boton" data-aj="sumaPagina" data-d="1" aria-label="Más">+</button></div></div>
       <div class="linea-ajuste"><span>Fila = mes ×</span><div class="contador"><button class="boton" data-aj="multFila" data-d="-1" aria-label="Menos">−</button><output id="ajMultFila">2</output><button class="boton" data-aj="multFila" data-d="1" aria-label="Más">+</button></div></div>
       <div class="linea-ajuste"><span>Cifra = mes +</span><div class="contador"><button class="boton" data-aj="sumaColumna" data-d="-1" aria-label="Menos">−</button><output id="ajSumaColumna">2</output><button class="boton" data-aj="sumaColumna" data-d="1" aria-label="Más">+</button></div></div>
@@ -349,6 +351,8 @@ dl.ficha dd{margin:0;font-variant-numeric:tabular-nums}
       <div class="linea-ajuste"><span>Buscador</span><input type="checkbox" class="interruptor" id="rutBuscador"></div>
       <div class="linea-ajuste"><span>Botón del reto</span><input type="checkbox" class="interruptor" id="rutReto"></div>
       <div class="linea-ajuste"><span>Notas de debajo de la tabla</span><input type="checkbox" class="interruptor" id="rutNotas"></div>
+      <span class="ayuda">Idioma de la web:</span>
+      <div class="segmento" id="segIdioma"><button data-v="auto">El de su móvil</button><button data-v="es">Español</button><button data-v="en">English</button></div>
     </div>
 
     <div class="grupo">
@@ -400,6 +404,7 @@ const AJUSTES_POR_DEFECTO = {
   // Efecto «tu cumpleaños en π»: dónde aparece la fecha que escribe el espectador
   fecha: {
     formato: "dma",          // "dm" | "md" | "dma" | "mda"  (el año siempre con 2 cifras)
+    ambos: true,             // europea y americana a la vez: DDMM en la fila mes×2 y MMDD en la siguiente
     sumaPagina: 50,          // página = día + 50
     multFila: 2,             // fila = mes × 2
     sumaColumna: 2,          // cifra de la fila donde empieza = mes + 2
@@ -416,6 +421,8 @@ const AJUSTES_POR_DEFECTO = {
     sumaFila: 1,             // fila = tercera cifra + 1
     sumaCifra: 1,            // cifra de la fila donde empieza = cuarta cifra + 1
   },
+  // Idioma de la web del espectador: «auto» (el de su móvil), «es» o «en»
+  idioma: "auto",
   // Lo que se ve en la web (para encadenar rutinas)
   rutinas: {
     buscador: false,
@@ -457,6 +464,26 @@ function posicionFecha(dia, mes, f) {
   const fila = ((mes * f.multFila - 1) % 25 + 25) % 25 + 1;
   const col = ((mes + f.sumaColumna - 1) % 20 + 20) % 20 + 1;
   return { pagina: pag, fila, columna: col, decimal: (pag - 1) * 500 + (fila - 1) * 20 + col };
+}
+
+// ¿Escribe la fecha al estilo americano (mes primero)?
+function esAmericana(formato) { return String(formato || "").startsWith("m"); }
+// Con «ambos», el buscador lee la fecha como la escribe el país del móvil (EE. UU.: mes primero)
+function formatoDelMovil(f, idioma) {
+  if (!f.ambos) return f.formato;
+  const lg = String(idioma || "").toLowerCase();
+  const usa = /^en-(us|ph|fm|mh|pw|as|gu|mp|pr|vi|um)/.test(lg) || lg === "en";
+  const conAnio = String(f.formato || "dma").endsWith("a");
+  return (usa ? "md" : "dm") + (conAnio ? "a" : "");
+}
+// Posición con las dos fechas: la americana va una fila más abajo
+function posicionFechaFormato(dia, mes, f, formato) {
+  const pos = posicionFecha(dia, mes, f);
+  if (f.ambos && esAmericana(formato)) {
+    pos.fila = pos.fila % 25 + 1;
+    pos.decimal = (pos.pagina - 1) * 500 + (pos.fila - 1) * 20 + pos.columna;
+  }
+  return pos;
 }
 
 function sumaCifras(n) {
@@ -603,7 +630,7 @@ function leerCodigoFila(c) {
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto, leerFecha, posicionFecha, posicionSecuencia, codigoFila, leerCodigoFila, continuacionSeguir };
+  module.exports = { AJUSTES_POR_DEFECTO, secuenciaDePagina, inicioDePagina, sumaCifras, paginaCompleta, cifrasReto, leerFecha, posicionFecha, esAmericana, formatoDelMovil, posicionFechaFormato, posicionSecuencia, codigoFila, leerCodigoFila, continuacionSeguir };
 }
 
 
@@ -645,10 +672,12 @@ function ponerFechas(p,d){
 function diaDePagina(p){const f=ajustes.fecha;for(let d=1;d<=31;d++)if(posicionFecha(d,1,f).pagina===p)return d;return 0}
 function ponerTodasFechas(p,d){
   const dia=diaDePagina(p);if(!dia)return d;
-  const f=ajustes.fecha,mdPrimero=(f.formato||"dma").startsWith("m"),dos=n=>String(n).padStart(2,"0");
-  for(let mes=1;mes<=12;mes++){
-    const pos=posicionFecha(dia,mes,f);if(pos.pagina!==p)continue;
-    const cif=mdPrimero?dos(mes)+dos(dia):dos(dia)+dos(mes);
+  const f=ajustes.fecha,dos=n=>String(n).padStart(2,"0");
+  // Con «ambos»: DDMM (europea) en su fila y MMDD (americana) en la siguiente
+  const formatos=f.ambos?["dm","md"]:[esAmericana(f.formato)?"md":"dm"];
+  for(let mes=1;mes<=12;mes++)for(const fmt of formatos){
+    const pos=posicionFechaFormato(dia,mes,f,fmt);if(pos.pagina!==p)continue;
+    const cif=esAmericana(fmt)?dos(mes)+dos(dia):dos(dia)+dos(mes);
     const i=(pos.fila-1)*POR_FILA+(pos.columna-1);
     d=d.slice(0,i)+cif+d.slice(i+cif.length);
   }
@@ -686,8 +715,52 @@ function digitosBase(p){
   return d;
 }
 
-const fmt=n=>n.toLocaleString("es-ES");
-const CURIOSIDADES=[
+/* ---------- Idioma de la web (español / inglés) ---------- */
+// «auto»: el del móvil del espectador. La app puede fijarlo (Ajustes → Idioma de la web).
+function idiomaWeb(){
+  const a=(typeof ajustes!=="undefined"&&ajustes&&ajustes.idioma)||"auto";
+  if(a==="es"||a==="en")return a;
+  return String(navigator.language||"es").toLowerCase().startsWith("es")?"es":(/^(en|de|fr|it|pt|nl|sv|da|no|nb|fi|pl|ja|zh|ko|ru)/.test(String(navigator.language||"").toLowerCase())?"en":"es");
+}
+const TEXTOS={
+  es:{paginas:"Páginas",anterior:"Página anterior",siguiente:"Página siguiente",pag:"Pág.",ir:"Ir",mil:"1.000",reto:"Reto",buscar:"Buscar",
+    tiempo:"Tiempo",tapaTexto:"Escribid en un papel, en orden, todas las cifras que recordéis desde el principio de la página.",comprobar:"Comprobar con la página",
+    buscarPi:"Buscar en π",cerrar:"Cerrar",tabFecha:"Fecha de nacimiento",tabSecuencia:"Cualquier secuencia",buscando:"Buscando en 500.000 decimales…",
+    pagina:"Página",fila:"Fila",cifra:"Cifra",seguirTexto:"Está en el libro de Pi Numbers. ¿Sabes en qué página?",verTabla:"Ver en la tabla",certificado:"Certificado",
+    guardarFoto:"Mantén pulsada la imagen para guardarla en Fotos.",frecuencia:"Frecuencia de cifras en esta página",ficha:"Ficha",constante:"Constante",
+    constanteV:"π = 3,14159 26535 89793…",formato:"Formato",formatoV:"25 filas de 20 cifras por página",total:"Total",totalV:"1.000 páginas",
+    verificacion:"Verificación",verificacionV:"Dos cálculos independientes con distinta precisión",nota:"Nota",
+    pieWeb:"Pi Numbers · Tablas de estudio de los decimales de π. Desliza a izquierda o derecha para pasar de página.",
+    escribeFecha:f=>`Escribe tu fecha (${f})`,escribe49:"Escribe de 4 a 9 cifras",escribe39:"Escribe de 3 a 9 cifras",
+    fechaMal:f=>"Esa fecha no es válida. Escríbela así: "+f,entre39:"Escribe entre 3 y 9 cifras.",min4:"Escribe al menos 4 cifras.",min2:"Escribe al menos 2 cifras.",
+    encontrada:"Encontrada",noAparece:"No aparece en el libro",cifraT:"Cifra",veces:"Veces",
+    certLa:"La fecha",certSec:"La secuencia",certAparece:"aparece en los decimales del número π",certPos:(p,f,c)=>`Página ${p} · Fila ${f} · Cifra ${c}`,
+    certFecha:(d,h)=>`Comprobado el ${d} a las ${h}`,locale:"es-ES",formatoFecha:{dm:"DD/MM",md:"MM/DD",dma:"DD/MM/AA",mda:"MM/DD/AA"}},
+  en:{paginas:"Pages",anterior:"Previous page",siguiente:"Next page",pag:"Page",ir:"Go",mil:"1,000",reto:"Challenge",buscar:"Search",
+    tiempo:"Time's up",tapaTexto:"On a piece of paper, write down in order every digit you remember from the start of the page.",comprobar:"Check against the page",
+    buscarPi:"Search π",cerrar:"Close",tabFecha:"Date of birth",tabSecuencia:"Any sequence",buscando:"Searching 500,000 decimals…",
+    pagina:"Page",fila:"Row",cifra:"Digit",seguirTexto:"It's in the Pi Numbers book. Can you guess which page?",verTabla:"Show in the table",certificado:"Certificate",
+    guardarFoto:"Press and hold the image to save it to Photos.",frecuencia:"Digit frequency on this page",ficha:"Details",constante:"Constant",
+    constanteV:"π = 3.14159 26535 89793…",formato:"Layout",formatoV:"25 rows of 20 digits per page",total:"Total",totalV:"1,000 pages",
+    verificacion:"Verification",verificacionV:"Two independent computations at different precision",nota:"Note",
+    pieWeb:"Pi Numbers · Study tables of the decimals of π. Swipe left or right to turn the page.",
+    escribeFecha:f=>`Type your date (${f})`,escribe49:"Type 4 to 9 digits",escribe39:"Type 3 to 9 digits",
+    fechaMal:f=>"That date isn't valid. Type it like this: "+f,entre39:"Type between 3 and 9 digits.",min4:"Type at least 4 digits.",min2:"Type at least 2 digits.",
+    encontrada:"Found",noAparece:"Not in the book",cifraT:"Digit",veces:"Count",
+    certLa:"The date",certSec:"The sequence",certAparece:"appears in the decimals of π",certPos:(p,f,c)=>`Page ${p} · Row ${f} · Digit ${c}`,
+    certFecha:(d,h)=>`Verified on ${d} at ${h}`,locale:"en-US",formatoFecha:{dm:"DD/MM",md:"MM/DD",dma:"DD/MM/YY",mda:"MM/DD/YY"}},
+};
+const T=k=>(TEXTOS[idiomaWeb()]||TEXTOS.es)[k];
+const fmt=n=>n.toLocaleString(T("locale"));
+function traducir(){
+  const L=TEXTOS[idiomaWeb()]||TEXTOS.es;
+  document.documentElement.lang=idiomaWeb();
+  document.querySelectorAll("[data-t]").forEach(el=>{const v=L[el.dataset.t];if(typeof v==="string")el.textContent=v});
+  document.querySelectorAll("[data-ta]").forEach(el=>{const v=L[el.dataset.ta];if(typeof v==="string")el.setAttribute("aria-label",v)});
+  if(typeof ponerModo==="function"&&!document.getElementById("buscadorFondo").hidden)ponerModo(modoBuscar);
+}
+const CURIOSIDADES_I={
+  es:[
   "Pi es irracional (Lambert, 1761) y trascendente (Lindemann, 1882): su desarrollo decimal no termina ni se vuelve periódico.",
   "Entre los decimales 762 y 767 aparecen seis nueves seguidos, el llamado punto Feynman.",
   "Arquímedes acotó π entre 3 10/71 y 3 1/7 inscribiendo y circunscribiendo polígonos de 96 lados.",
@@ -695,8 +768,18 @@ const CURIOSIDADES=[
   "Con 39 decimales se calcula la circunferencia del universo observable con un error menor que un átomo de hidrógeno.",
   "El JPL de la NASA usa 15 decimales de π para sus cálculos de navegación interplanetaria.",
   "Se conjetura que π es un número normal: cada cifra aparecería con frecuencia 1/10. La tabla de arriba lo deja comprobar página a página.",
-  "El símbolo π lo introdujo William Jones en 1706 y lo popularizó Leonhard Euler.",
-];
+  "El símbolo π lo introdujo William Jones en 1706 y lo popularizó Leonhard Euler."],
+  en:[
+  "π is irrational (Lambert, 1761) and transcendental (Lindemann, 1882): its decimal expansion never ends and never repeats.",
+  "Six nines in a row appear between decimals 762 and 767: the so-called Feynman point.",
+  "Archimedes bounded π between 3 10/71 and 3 1/7 using inscribed and circumscribed 96-sided polygons.",
+  "The first zero of the expansion appears at decimal 32.",
+  "39 decimals are enough to compute the circumference of the observable universe to within the width of a hydrogen atom.",
+  "NASA's JPL uses 15 decimals of π for interplanetary navigation.",
+  "π is conjectured to be a normal number: every digit would appear with frequency 1/10. The table above lets you check it page by page.",
+  "The symbol π was introduced by William Jones in 1706 and popularised by Leonhard Euler."],
+};
+const CURIOSIDADES={get length(){return CURIOSIDADES_I.es.length}};
 
 function filasDePagina(p){
   const d=digitosDePagina(p);
@@ -741,11 +824,11 @@ function pintar(){
   // frecuencias
   const cuenta=Array(10).fill(0);for(const c of d)cuenta[+c]++;
   document.getElementById("frecuencias").innerHTML=
-    `<tr><th>Cifra</th>${cuenta.map((_,i)=>`<th>${i}</th>`).join("")}</tr>`+
-    `<tr><th>Veces</th>${cuenta.map(n=>`<td>${n}</td>`).join("")}</tr>`;
+    `<tr><th>${T("cifraT")}</th>${cuenta.map((_,i)=>`<th>${i}</th>`).join("")}</tr>`+
+    `<tr><th>${T("veces")}</th>${cuenta.map(n=>`<td>${n}</td>`).join("")}</tr>`;
   document.getElementById("anterior").disabled=pagina<=1;
   document.getElementById("siguiente").disabled=pagina>=PAGINAS;
-  document.getElementById("curiosidad").textContent=CURIOSIDADES[(pagina-1)%CURIOSIDADES.length];
+  document.getElementById("curiosidad").textContent=(CURIOSIDADES_I[idiomaWeb()]||CURIOSIDADES_I.es)[(pagina-1)%CURIOSIDADES.length];
   const campo=document.getElementById("campoPagina");campo.value="";campo.placeholder=String(pagina);
   if(location.hash!=="#p"+pagina)history.replaceState(null,"","#p"+pagina);
   pintarReto();
@@ -860,7 +943,7 @@ function deApp(m){
   ultimaRespuesta=Date.now();
   if(m.t==="cfg"&&m.ajustes){
     ajustes=mezclarAjustes(m.ajustes);
-    guardar();ultimoAviso="";pintar();aplicarRutinas();
+    guardar();ultimoAviso="";traducir();pintar();aplicarRutinas();
     if(!document.getElementById("panelFondo").hidden)pintarPanel();
   }else if(m.t==="armar"){
     if(!!m.on!==reto.modo)ponerArmado(m.on,"app");
@@ -911,9 +994,9 @@ function textoFecha(fe,formato){
 }
 // Coloca la fecha según la regla y la deja guardada en este móvil
 function colocarFecha(texto,formato){
-  const fmt=formato||ajustes.fecha.formato;
+  const fmt=formato||formatoDelMovil(ajustes.fecha,navigator.language);
   const fe=leerFecha(texto,fmt);if(!fe)return null;
-  const pos=posicionFecha(fe.dia,fe.mes,ajustes.fecha);
+  const pos=posicionFechaFormato(fe.dia,fe.mes,ajustes.fecha,fmt);
   const rec={p:pos.pagina,f:pos.fila,c:pos.columna,cifras:fe.cifras,texto:textoFecha(fe,fmt),n:pos.decimal};
   fechas=fechas.filter(x=>!(x.p===rec.p&&x.f===rec.f&&x.c===rec.c));
   fechas.push(rec);guardarFechas();
@@ -937,9 +1020,9 @@ function ponerModo(m){
   modoBuscar=m;
   $("tabFecha").setAttribute("aria-selected",String(m==="fecha"));
   $("tabSecuencia").setAttribute("aria-selected",String(m==="secuencia"));
-  const fm=FORMATOS_FECHA[ajustes.fecha.formato]||FORMATOS_FECHA.dma;
-  $("etiquetaBuscar").textContent=m==="fecha"?`Escribe tu fecha (${fm.texto})`:(ajustes.secuencia.modo==="regla"?"Escribe de 4 a 9 cifras":"Escribe de 3 a 9 cifras");
-  $("campoBuscar").placeholder=m==="fecha"?fm.texto:"123456";
+  const fm=T("formatoFecha")[formatoDelMovil(ajustes.fecha,navigator.language)]||"DD/MM/AA";
+  $("etiquetaBuscar").textContent=m==="fecha"?T("escribeFecha")(fm):(ajustes.secuencia.modo==="regla"?T("escribe49"):T("escribe39"));
+  $("campoBuscar").placeholder=m==="fecha"?fm:"123456";
   $("errorBuscar").hidden=true;
 }
 function abrirBuscador(){
@@ -961,16 +1044,16 @@ $("formBuscar").addEventListener("submit",e=>{
   let r=null;
   if(modoBuscar==="fecha"){
     r=colocarFecha(q);
-    if(!r){$("errorBuscar").textContent="Esa fecha no es válida. Escríbela así: "+(FORMATOS_FECHA[ajustes.fecha.formato]||FORMATOS_FECHA.dma).texto;$("errorBuscar").hidden=false;return}
+    if(!r){$("errorBuscar").textContent=T("fechaMal")(T("formatoFecha")[formatoDelMovil(ajustes.fecha,navigator.language)]||"DD/MM/AA");$("errorBuscar").hidden=false;return}
   }else{
     const s=q.replace(/[^0-9]/g,"");
-    if(s.length<3||s.length>9){$("errorBuscar").textContent="Escribe entre 3 y 9 cifras.";$("errorBuscar").hidden=false;return}
+    if(s.length<3||s.length>9){$("errorBuscar").textContent=T("entre39");$("errorBuscar").hidden=false;return}
     if(ajustes.secuencia.modo==="seguir"){
-      if(s.length<2){$("errorBuscar").textContent="Escribe al menos 2 cifras.";$("errorBuscar").hidden=false;return}
+      if(s.length<2){$("errorBuscar").textContent=T("min2");$("errorBuscar").hidden=false;return}
       prepararSeguir(s,"web");
       r={p:0,seguir:true,texto:s,cifras:s};
     }else if(ajustes.secuencia.modo==="regla"){
-      if(s.length<4){$("errorBuscar").textContent="Escribe al menos 4 cifras.";$("errorBuscar").hidden=false;return}
+      if(s.length<4){$("errorBuscar").textContent=T("min4");$("errorBuscar").hidden=false;return}
       r=colocarSecuencia(s);
     }else{
       r=buscarSecuencia(s);
@@ -998,7 +1081,7 @@ function animarBusqueda(r){
 function mostrarResultado(r){
   $("progresoBuscar").hidden=true;$("resultadoBuscar").hidden=false;
   const ok=r.p>0||!!r.seguir;
-  $("estadoResultado").textContent=ok?"Encontrada":"No aparece en el libro";
+  $("estadoResultado").textContent=ok?T("encontrada"):T("noAparece");
   $("seguirTexto").hidden=!r.seguir;
   document.querySelector(".b-ficha").hidden=!!r.seguir;
   $("buscadaResultado").textContent=r.texto;
@@ -1021,11 +1104,11 @@ function certificado(r){
   x.strokeStyle="#B3121F";x.lineWidth=6;x.strokeRect(40,40,W-80,H-80);
   x.strokeStyle="#d9d9d9";x.lineWidth=2;x.strokeRect(60,60,W-120,H-120);
   x.textAlign="center";x.fillStyle="#B3121F";x.font=`600 150px ${serif}`;x.fillText("π",W/2,250);
-  x.fillStyle="#111";x.font=`600 64px ${serif}`;x.fillText("Certificado",W/2,350);
-  x.fillStyle="#6b6b6b";x.font=`400 34px ${sans}`;x.fillText(modoBuscar==="fecha"||r.texto.includes("/")?"La fecha":"La secuencia",W/2,450);
+  x.fillStyle="#111";x.font=`600 64px ${serif}`;x.fillText(T("certificado"),W/2,350);
+  x.fillStyle="#6b6b6b";x.font=`400 34px ${sans}`;x.fillText(modoBuscar==="fecha"||r.texto.includes("/")?T("certLa"):T("certSec"),W/2,450);
   x.fillStyle="#B3121F";x.font=`400 96px ${serif}`;x.fillText(r.texto,W/2,560);
-  x.fillStyle="#6b6b6b";x.font=`400 34px ${sans}`;x.fillText("aparece en los decimales del número π",W/2,630);
-  x.fillStyle="#111";x.font=`600 44px ${sans}`;x.fillText(`Página ${fmt(r.p)} · Fila ${r.f} · Cifra ${r.c}`,W/2,740);
+  x.fillStyle="#6b6b6b";x.font=`400 34px ${sans}`;x.fillText(T("certAparece"),W/2,630);
+  x.fillStyle="#111";x.font=`600 44px ${sans}`;x.fillText(T("certPos")(fmt(r.p),r.f,r.c),W/2,740);
   // la fila con la fecha marcada
   const fila=digitosDePagina(r.p).slice((r.f-1)*POR_FILA,r.f*POR_FILA),paso=44,x0=W/2-paso*POR_FILA/2+paso/2;
   const i0=r.c-1,i1=i0+r.cifras.length;
@@ -1033,11 +1116,11 @@ function certificado(r){
   [...fila].forEach((ch,j)=>{const cx=x0+j*paso;if(j>=i0&&j<i1){x.fillStyle="#B3121F";x.fillRect(cx-paso/2+2,875,paso-4,60);x.fillStyle="#fff"}else x.fillStyle="#111";x.fillText(ch,cx,920)});
   const ahora=new Date();
   x.fillStyle="#6b6b6b";x.font=`400 30px ${sans}`;
-  x.fillText("Comprobado el "+ahora.toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"})+" a las "+ahora.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}),W/2,1080);
+  x.fillText(T("certFecha")(ahora.toLocaleDateString(T("locale"),{day:"numeric",month:"long",year:"numeric"}),ahora.toLocaleTimeString(T("locale"),{hour:"2-digit",minute:"2-digit"})),W/2,1080);
   x.fillStyle="#111";x.font=`600 34px ${sans}`;x.fillText("pinumbers.es",W/2,1220);
   return cv.toDataURL("image/png");
 }
-aplicarRutinas();
+aplicarRutinas();traducir();
 
 /* ---------- Modo fecha (doble toque a la izquierda) ---------- */
 function ponerModoFecha(on,origen){
@@ -1164,6 +1247,7 @@ function pintarPanel(){
   document.getElementById("infoFechas").textContent=fechas.length?"Fechas colocadas: "+fechas.map(x=>x.texto+" → pág. "+x.p).join(", "):"Ninguna fecha colocada.";
   document.getElementById("borrarFechas").disabled=!fechas.length&&!reto.paginasFecha.length;
   document.getElementById("ajModoFecha").checked=!!reto.fecha;
+  document.getElementById("ajAmbos").checked=!!ajustes.fecha.ambos;
   document.getElementById("ajModoFilas").checked=!!reto.filas;
   document.getElementById("infoFilas").textContent=reto.paginasFilas.length?"Páginas con códigos de fila: "+reto.paginasFilas.slice().sort((a,b)=>a-b).join(", "):"";
   marcarSeg("segModoSec",ajustes.secuencia.modo);
@@ -1171,6 +1255,7 @@ function pintarPanel(){
   document.getElementById("rutBuscador").checked=!!ajustes.rutinas.buscador;
   document.getElementById("rutReto").checked=!!ajustes.rutinas.reto;
   document.getElementById("rutNotas").checked=!!ajustes.rutinas.notas;
+  marcarSeg("segIdioma",ajustes.idioma||"auto");
   marcarSeg("segSegundos",String(ajustes.segundosReto||30));
   marcarSeg("segCifrasReto",String(ajustes.cifrasReto||60));
   document.getElementById("infoGuardadas").textContent=reto.paginas.length
@@ -1225,12 +1310,14 @@ document.querySelectorAll("#segFormato button").forEach(b=>b.onclick=()=>{ajuste
 const LIMITES_FECHA={sumaPagina:[0,919],multFila:[1,12],sumaColumna:[0,19],segundos:[1,15]};
 document.querySelectorAll("[data-aj]").forEach(b=>b.onclick=()=>{const k=b.dataset.aj,[mn,mx]=LIMITES_FECHA[k];ajustes.fecha[k]=Math.max(mn,Math.min(mx,ajustes.fecha[k]+ +b.dataset.d));cambio()});
 document.getElementById("borrarFechas").onclick=()=>{fechas=[];reto.paginasFecha=[];reto.realesFecha=[];guardarFechas();guardarReto();cambio()};
+document.getElementById("ajAmbos").onchange=e=>{ajustes.fecha.ambos=e.target.checked;cambio()};
 document.getElementById("ajModoFecha").onchange=e=>{ponerModoFecha(e.target.checked,"web");cambio()};
 document.getElementById("ajModoFilas").onchange=e=>{ponerModoFilas(e.target.checked,"web");cambio()};
 document.querySelectorAll("#segModoSec button").forEach(b=>b.onclick=()=>{ajustes.secuencia.modo=b.dataset.v;cambio()});
 document.getElementById("rutBuscador").onchange=e=>{ajustes.rutinas.buscador=e.target.checked;cambio();aplicarRutinas()};
 document.getElementById("rutReto").onchange=e=>{ajustes.rutinas.reto=e.target.checked;cambio();aplicarRutinas()};
 document.getElementById("rutNotas").onchange=e=>{ajustes.rutinas.notas=e.target.checked;cambio();aplicarRutinas()};
+document.querySelectorAll("#segIdioma button").forEach(b=>b.onclick=()=>{ajustes.idioma=b.dataset.v;cambio();traducir();pintar()});
 document.getElementById("restablecer").onclick=()=>{ajustes=JSON.parse(JSON.stringify(AJUSTES_POR_DEFECTO));cambio()};
 document.getElementById("campoPrueba").addEventListener("input",vistaPrevia);
 
