@@ -933,7 +933,7 @@ const CLAVE_COD="pinumbers.codigo";
 const CLAVE_ENLACE="pinumbers.enlace.v1";
 const HORAS_ENLACE=6;
 function leerEnlace(){try{const e=JSON.parse(localStorage.getItem(CLAVE_ENLACE)||"null");if(e&&e.codigo&&e.hasta>Date.now())return e}catch(err){}return null}
-function guardarEnlace(c,horas){try{localStorage.setItem(CLAVE_ENLACE,JSON.stringify({codigo:c,hasta:Date.now()+horas*3600e3}))}catch(e){}}
+function guardarEnlace(c,horas){try{localStorage.setItem(CLAVE_ENLACE,JSON.stringify({codigo:c,desde:Date.now(),hasta:Date.now()+horas*3600e3}))}catch(e){}}
 let codigo=(leerEnlace()||{}).codigo||"";
 function enlazado(){return !!codigo&&!!leerEnlace()}
 let fuente=null,ultimaRespuesta=0;
@@ -950,6 +950,8 @@ function deApp(m){
     ajustes=mezclarAjustes(m.ajustes);
     guardar();ultimoAviso="";traducir();pintar();aplicarRutinas();
     if(!document.getElementById("panelFondo").hidden)pintarPanel();
+  }else if(m.t==="reset"){
+    resetear(m.ts);
   }else if(m.t==="armar"){
     if(!!m.on!==reto.modo)ponerArmado(m.on,"app");
   }else if(m.t==="limpiar"){
@@ -969,14 +971,33 @@ function deApp(m){
     enviar({t:"hola",p:pagina,armado:reto.modo,guardadas:reto.paginas});
   }
 }
+/* Reseteo desde la app: esta web deja de estar enlazada y vuelve a ser pi real, sin nada trucado */
+function resetear(ts){
+  const e=leerEnlace();
+  if(!e)return;
+  if(ts&&e.desde&&+ts<e.desde)return;   // reseteo anterior a este enlace: no cuenta
+  enviar({t:"reseteado",p:pagina});
+  reto={modo:false,paginas:[],reales:[],fecha:false,paginasFecha:[],realesFecha:[],filas:false,paginasFilas:[],realesFilas:[]};guardarReto();
+  fechas=[];guardarFechas();
+  try{seguir=null;guardarSeguir()}catch(err){}
+  codigo="";
+  try{localStorage.removeItem(CLAVE_ENLACE);localStorage.removeItem(CLAVE)}catch(err){}
+  enlazadoSesion=false;try{sessionStorage.removeItem("pinumbers.par")}catch(err){}
+  if(fuente){try{fuente.close()}catch(err){}fuente=null}
+  ajustes=mezclarAjustes(null);ultimoAviso="";
+  try{cerrarPanel()}catch(err){}
+  traducir();pintar();aplicarRutinas();
+}
 function conectar(){
   if(fuente){try{fuente.close()}catch(e){}fuente=null}
   if(!enlazado()){codigo="";return}
   if(!window.EventSource)return;
   // Los últimos ajustes que mandó la app (por si se abrió la web sin la app delante)
   fetch(RELAY+"/"+temaApp()+"/json?poll=1&since=12h").then(r=>r.text()).then(txt=>{
-    let ultimoCfg=null;
-    txt.split("\n").forEach(l=>{try{const o=JSON.parse(l);if(o.event==="message"){const m=JSON.parse(o.message);if(m.t==="cfg")ultimoCfg=m}}catch(e){}});
+    let ultimoCfg=null,ultimoReset=0;
+    txt.split("\n").forEach(l=>{try{const o=JSON.parse(l);if(o.event==="message"){const m=JSON.parse(o.message);if(m.t==="cfg")ultimoCfg=m;if(m.t==="reset")ultimoReset=Math.max(ultimoReset,+m.ts||0)}}catch(e){}});
+    const e=leerEnlace();
+    if(ultimoReset&&e&&(!e.desde||ultimoReset>=e.desde)){resetear(ultimoReset);return}
     if(ultimoCfg)deApp(ultimoCfg);
   }).catch(()=>{});
   fuente=new EventSource(RELAY+"/"+temaApp()+"/sse");
