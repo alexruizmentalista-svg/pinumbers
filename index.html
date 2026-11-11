@@ -658,6 +658,7 @@ let reto=(()=>{try{const g=JSON.parse(localStorage.getItem(CLAVE_RETO)||"null");
 function guardarReto(){try{localStorage.setItem(CLAVE_RETO,JSON.stringify(reto))}catch(e){}}
 function paginaBloqueable(p){return !(p===1&&ajustes.pagina1Real)}
 function fijarSiToca(p){
+  if(!enlazado())return;
   if(reto.modo&&paginaBloqueable(p)&&!reto.paginas.includes(p)&&!reto.reales.includes(p)&&!reto.paginasFilas.includes(p)){reto.paginas.push(p);guardarReto()}
 }
 /* Fechas colocadas en este móvil (efecto del cumpleaños): se quedan para siempre */
@@ -684,6 +685,7 @@ function ponerTodasFechas(p,d){
   return d.slice(0,POR_PAGINA);
 }
 function fijarFechaSiToca(p){
+  if(!enlazado())return;
   if(reto.fecha&&diaDePagina(p)&&!reto.paginasFecha.includes(p)&&!reto.realesFecha.includes(p)&&!reto.paginasFilas.includes(p)){reto.paginasFecha.push(p);guardarReto()}
 }
 // Modo filas: las 6 primeras cifras de cada fila esconden la página y la fila (codigoFila en formula.js)
@@ -692,6 +694,7 @@ function ponerCodigosFila(p,d){
   return d;
 }
 function fijarFilasSiToca(p){
+  if(!enlazado())return;
   if(reto.filas&&!(p===1&&ajustes.pagina1Real)&&!reto.paginasFilas.includes(p)&&!reto.realesFilas.includes(p)
      &&!reto.paginas.includes(p)&&!reto.paginasFecha.includes(p)){reto.paginasFilas.push(p);guardarReto()}
 }
@@ -872,9 +875,10 @@ function leerHash(){const m=/^#p(\d+)$/.exec(location.hash);if(m){pagina=Math.ma
 let retoTimer=null,retoFin=0;
 function textoDuracion(s){return s<60?`${s} s`:`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`}
 function pintarReto(){
-  document.getElementById("punto").hidden=!reto.modo;
-  document.getElementById("puntoFecha").hidden=!reto.fecha;
-  document.getElementById("puntoFilas").hidden=!reto.filas;
+  const en=enlazado();
+  document.getElementById("punto").hidden=!reto.modo||!en;
+  document.getElementById("puntoFecha").hidden=!reto.fecha||!en;
+  document.getElementById("puntoFilas").hidden=!reto.filas||!en;
   if(!retoTimer)document.getElementById("textoReto").textContent=textoDuracion(ajustes.segundosReto||30);
 }
 function empezarReto(){
@@ -896,6 +900,7 @@ document.getElementById("botonReto").onclick=empezarReto;
 document.getElementById("verPagina").onclick=()=>{document.getElementById("tapa").hidden=true};
 // doble toque discreto sobre «Decimales…»: activa o desactiva el modo página completa
 (()=>{let ultimo=0;document.getElementById("rango").addEventListener("click",()=>{
+  if(!enlazado())return;
   const ahora=Date.now();
   if(ahora-ultimo<400){ultimo=0;ponerArmado(!reto.modo,"web")}
   else ultimo=ahora;
@@ -952,6 +957,8 @@ function deApp(m){
   }else if(m.t==="fecha"&&m.q){
     const r=colocarFecha(m.q,m.formato);
     enviar(r?{t:"fechaColocada",q:r.texto,p:r.p,f:r.f,c:r.c,n:r.n}:{t:"fechaColocada",q:m.q,error:true});
+  }else if(m.t==="colocar"&&m.q){
+    colocarDesdeApp(m);
   }else if(m.t==="seguir"&&m.q){
     prepararSeguir(String(m.q).replace(/[^0-9]/g,""),"app");
   }else if(m.t==="modoFilas"){
@@ -1132,6 +1139,7 @@ function ponerModoFecha(on,origen){
   if(origen==="web")enviar({t:"modoFecha",on:reto.fecha});
 }
 (()=>{let ultimo=0;$("zonaFecha").addEventListener("click",()=>{
+  if(!enlazado())return;
   const ahora=Date.now();
   if(ahora-ultimo<400){ultimo=0;ponerModoFecha(!reto.fecha,"web")}else ultimo=ahora;
 })})();
@@ -1156,6 +1164,7 @@ function ponerModoFilas(on,origen){
 }
 let ultimoToqueFila=0;
 function toqueNumeroFila(){
+  if(!enlazado())return;
   const ahora=Date.now();
   if(ahora-ultimoToqueFila<400){ultimoToqueFila=0;ponerModoFilas(!reto.filas,"web")}else ultimoToqueFila=ahora;
 }
@@ -1221,6 +1230,7 @@ function probarSesion(){
 /* ---------- Panel oculto ---------- */
 let toques=[];
 document.getElementById("logo").addEventListener("click",()=>{
+  if(!enlazado()&&!new URLSearchParams(location.search).has("mago"))return;
   const ahora=Date.now();toques=toques.filter(t=>ahora-t<700);toques.push(ahora);
   if(toques.length>=3){toques=[];abrirPanel()}
 });
@@ -1346,6 +1356,27 @@ function vistaPrevia(){
 }
 
 leerHash();pintar();conectar();probarSesion();
+
+/* ---------- Colocar un número en una página concreta (modo mixto de la calculadora) ---------- */
+function refrescarCifras(){
+  const d=digitosDePagina(pagina);
+  document.querySelectorAll("#tabla .fila").forEach((fila,f)=>{
+    const s=d.slice(f*POR_FILA,(f+1)*POR_FILA);
+    fila.querySelectorAll(".cifras span:not(.entero)").forEach((sp,j)=>{if(s[j]!==undefined&&sp.textContent!==s[j])sp.textContent=s[j]});
+  });
+}
+function colocarDesdeApp(m){
+  const q=String(m.q).replace(/[^0-9]/g,"").slice(0,40);
+  const p=+m.p,f=+m.f,c=+m.c;
+  if(!q||!(p>=1&&p<=PAGINAS&&f>=1&&f<=FILAS&&c>=1&&c<=POR_FILA))return;
+  fechas=fechas.filter(x=>!(x.p===p&&x.f===f&&x.c===c));
+  fechas.push({p,f,c,cifras:q,texto:q,n:(p-1)*POR_PAGINA+(f-1)*POR_FILA+c});
+  guardarFechas();
+  [reto.reales,reto.realesFecha,reto.realesFilas].forEach(a=>{if(!a.includes(p))a.push(p)});
+  guardarReto();
+  if(p===pagina)refrescarCifras();   // sin repintar: solo cambian esas cifras
+  enviar({t:"colocado",q,p,f,c,visible:p===pagina});
+}
 </script>
 
 </body>
