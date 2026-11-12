@@ -737,7 +737,7 @@ const TEXTOS={
     escribeFecha:f=>`Escribe tu fecha (${f})`,escribe49:"Escribe de 4 a 9 cifras",escribe39:"Escribe de 3 a 9 cifras",
     fechaMal:f=>"Esa fecha no es válida. Escríbela así: "+f,entre39:"Escribe entre 3 y 9 cifras.",min4:"Escribe al menos 4 cifras.",min2:"Escribe al menos 2 cifras.",
     encontrada:"Encontrada",noAparece:"No aparece en el libro",cifraT:"Cifra",veces:"Veces",
-    certLa:"La fecha",certSec:"La secuencia",certAparece:"aparece en los decimales del número π",certPos:(p,f,c)=>`Página ${p} · Fila ${f} · Cifra ${c}`,
+    certLa:"La fecha",certSec:"La secuencia",certAparece:"aparece en los decimales del número π",certPos:(p,f,c)=>`Página ${p} · Fila ${f} · Cifra ${c}`,certDec:n=>`Empieza en el decimal nº ${n} de π`,certNum:"El número",
     certFecha:(d,h)=>`Comprobado el ${d} a las ${h}`,locale:"es-ES",formatoFecha:{dm:"DD/MM",md:"MM/DD",dma:"DD/MM/AA",mda:"MM/DD/AA"}},
   en:{paginas:"Pages",anterior:"Previous page",siguiente:"Next page",pag:"Page",ir:"Go",mil:"1,000",reto:"Challenge",buscar:"Search",
     tiempo:"Time's up",tapaTexto:"On a piece of paper, write down in order every digit you remember from the start of the page.",comprobar:"Check against the page",
@@ -750,7 +750,7 @@ const TEXTOS={
     escribeFecha:f=>`Type your date (${f})`,escribe49:"Type 4 to 9 digits",escribe39:"Type 3 to 9 digits",
     fechaMal:f=>"That date isn't valid. Type it like this: "+f,entre39:"Type between 3 and 9 digits.",min4:"Type at least 4 digits.",min2:"Type at least 2 digits.",
     encontrada:"Found",noAparece:"Not in the book",cifraT:"Digit",veces:"Count",
-    certLa:"The date",certSec:"The sequence",certAparece:"appears in the decimals of π",certPos:(p,f,c)=>`Page ${p} · Row ${f} · Digit ${c}`,
+    certLa:"The date",certSec:"The sequence",certAparece:"appears in the decimals of π",certPos:(p,f,c)=>`Page ${p} · Row ${f} · Digit ${c}`,certDec:n=>`It starts at decimal place no. ${n} of π`,certNum:"The number",
     certFecha:(d,h)=>`Verified on ${d} at ${h}`,locale:"en-US",formatoFecha:{dm:"DD/MM",md:"MM/DD",dma:"DD/MM/YY",mda:"MM/DD/YY"}},
 };
 const T=k=>(TEXTOS[idiomaWeb()]||TEXTOS.es)[k];
@@ -1133,13 +1133,19 @@ function certificado(r){
   x.strokeStyle="#d9d9d9";x.lineWidth=2;x.strokeRect(60,60,W-120,H-120);
   x.textAlign="center";x.fillStyle="#B3121F";x.font=`600 150px ${serif}`;x.fillText("π",W/2,250);
   x.fillStyle="#111";x.font=`600 64px ${serif}`;x.fillText(T("certificado"),W/2,350);
-  x.fillStyle="#6b6b6b";x.font=`400 34px ${sans}`;x.fillText(modoBuscar==="fecha"||r.texto.includes("/")?T("certLa"):T("certSec"),W/2,450);
+  x.fillStyle="#6b6b6b";x.font=`400 34px ${sans}`;x.fillText(modoBuscar==="fecha"||r.texto.includes("/")?T("certLa"):T("certNum"),W/2,450);
   x.fillStyle="#B3121F";x.font=`400 96px ${serif}`;x.fillText(r.texto,W/2,560);
   x.fillStyle="#6b6b6b";x.font=`400 34px ${sans}`;x.fillText(T("certAparece"),W/2,630);
-  x.fillStyle="#111";x.font=`600 44px ${sans}`;x.fillText(T("certPos")(fmt(r.p),r.f,r.c),W/2,740);
+  x.fillStyle="#111";x.font=`600 44px ${sans}`;x.fillText(T("certPos")(fmt(r.p),r.f,r.c),W/2,725);
+  // Posición REAL en π (la de verdad, comprobable en cualquier sitio): se busca en los decimales sin tocar
+  const nReal=DECIMALES.indexOf(r.cifras);
+  if(nReal>=0){x.fillStyle="#B3121F";x.font=`600 40px ${sans}`;x.fillText(T("certDec")(fmt(nReal+1)),W/2,800)}
   // la fila con la fecha marcada
-  const fila=digitosDePagina(r.p).slice((r.f-1)*POR_FILA,r.f*POR_FILA),paso=44,x0=W/2-paso*POR_FILA/2+paso/2;
-  const i0=r.c-1,i1=i0+r.cifras.length;
+  // 20 cifras alrededor del número (aunque pase a la fila siguiente, se ve entero)
+  const todo=digitosDePagina(r.p)+(r.p<PAGINAS?digitosDePagina(r.p+1).slice(0,POR_FILA):""),k=(r.f-1)*POR_FILA+(r.c-1),L=Math.min(r.cifras.length,POR_FILA);
+  const ini=Math.max(0,Math.min(todo.length-POR_FILA,k-Math.floor((POR_FILA-L)/2)));
+  const fila=todo.slice(ini,ini+POR_FILA),paso=44,x0=W/2-paso*POR_FILA/2+paso/2;
+  const i0=k-ini,i1=i0+L;
   x.font=`400 44px ${serif}`;
   [...fila].forEach((ch,j)=>{const cx=x0+j*paso;if(j>=i0&&j<i1){x.fillStyle="#B3121F";x.fillRect(cx-paso/2+2,875,paso-4,60);x.fillStyle="#fff"}else x.fillStyle="#111";x.fillText(ch,cx,920)});
   const ahora=new Date();
